@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import GuestGuard from "@/components/GuestGuard";
 
 const outfit = Outfit({
   variable: "--font-outfit",

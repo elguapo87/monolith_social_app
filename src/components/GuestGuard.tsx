@@ -3,6 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Loading from "./Loading";
 
 export default function GuestGuard({ children } : { children: React.ReactNode }) {
     const router = useRouter();
@@ -15,7 +16,7 @@ export default function GuestGuard({ children } : { children: React.ReactNode })
     }, [user, isLoaded, router]);
 
     if (!isLoaded) {
-        return <p>Loading...</p>
+        return <Loading />
     }
 
     if (user) {

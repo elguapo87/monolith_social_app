@@ -3,6 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Loading from "./Loading";
 
 export default function AuthGuard({ children } : { children: React.ReactNode }) {
     const { isLoaded, user } = useUser();
@@ -17,7 +18,7 @@ export default function AuthGuard({ children } : { children: React.ReactNode }) 
     console.log("AuthGuard user:", user);
 
     if (!isLoaded) {
-        return <p>Loading...</p>
+        return <Loading />
     }
 
     if (!user) {
