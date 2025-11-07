@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import moment from "moment";
 import StoryModal from "./StoryModal";
+import StoryViewer from "./StoryViewer";
 
 type StoriesType = typeof dummyStoriesData
 
@@ -41,7 +42,12 @@ const StoriesBar = () => {
                             <Plus className="w-5 h-5 text-white" />
                         </div>
 
-                        <p className="text-sm font-medium text-slate-700 text-center">Create Story</p>
+                        <p 
+                            className="text-sm font-medium text-slate-700 text-center
+                             hover:scale-[1.03] transition-all duration-300"
+                        >
+                            Create Story
+                        </p>
                     </div>
                 </div>
 
@@ -95,10 +101,10 @@ const StoriesBar = () => {
             </div>
 
             {/* ADD STORY MODAL */}
-            {showModal && <StoryModal />}
+            {showModal && <StoryModal setShowModal={setShowModal} fetchStories={fetchStories} />}
 
             {/* VIEW STORY MODAL */}
-            
+            {viewStory && <StoryViewer />}
         </div>
     )
 }
