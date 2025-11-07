@@ -2,14 +2,12 @@
 
 import Loading from "@/components/Loading";
 import StoriesBar from "@/components/StoriesBar"
-import { useUser } from "@clerk/nextjs";
 import { dummyPostsData } from "../../../public/assets";
 import { useEffect, useState } from "react";
 
 type FeedType = typeof dummyPostsData;
 
 const Feed = () => {
-  const { user, isLoaded } = useUser();
 
   const [feeds, setFeeds] = useState<FeedType>([]);
   const [loading, setLoading] = useState(true);

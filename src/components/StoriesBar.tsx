@@ -104,7 +104,7 @@ const StoriesBar = () => {
             {showModal && <StoryModal setShowModal={setShowModal} fetchStories={fetchStories} />}
 
             {/* VIEW STORY MODAL */}
-            {viewStory && <StoryViewer />}
+            {viewStory && <StoryViewer viewStory={viewStory} setViewStory={setViewStory} />}
         </div>
     )
 }
