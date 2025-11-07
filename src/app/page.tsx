@@ -1,7 +1,19 @@
+"use client"
+
 import Image from "next/image"
 import { assets } from "../../public/assets"
+import { useClerk, useUser, UserButton } from "@clerk/nextjs"
+import { useRouter } from "next/navigation";
+import { SignIn } from "@clerk/clerk-react";
 
 const Login = () => {
+
+  const { openSignIn } = useClerk();
+  const { user } = useUser();
+
+  const router = useRouter();
+
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <Image
@@ -30,7 +42,7 @@ const Login = () => {
 
       {/* RIGHT SIDE: LOGIN FORM */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
-        
+        <SignIn />
       </div>
     </div>
   )
