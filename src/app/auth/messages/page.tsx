@@ -27,10 +27,10 @@ const Messages = () => {
                         >
                             <Image
                                 src={user.profile_picture}
-                                width={100}
-                                height={100}
+                                width={48}
+                                height={48}
                                 alt=""
-                                className="rounded-full size-12 mx-auto"
+                                className="rounded-ful aspect-square size-12 mx-auto"
                             />
 
                             <div className="flex-1">
