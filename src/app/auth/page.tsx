@@ -5,6 +5,7 @@ import StoriesBar from "@/components/StoriesBar"
 import { dummyPostsData } from "../../../public/assets";
 import { useEffect, useState } from "react";
 import PostCard from "@/components/PostCard";
+import RecentMessages from "@/components/RecentMessages";
 
 type FeedType = typeof dummyPostsData;
 
@@ -38,8 +39,8 @@ const Feed = () => {
       </div>
 
       {/* RIGHT SIDEBAR */}
-      <div>
-        <h1>Recent Messages</h1>
+      <div className="max-xl:hidden sticky top-0">
+        <RecentMessages /> 
       </div>
     </div>
   ) : (
