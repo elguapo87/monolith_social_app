@@ -48,7 +48,7 @@ type ProfileProps = {
     updatedAt: string;
   }[];
 
-  profileId: string | number;
+  profileId: string;
   setShowEdit: React.Dispatch<React.SetStateAction<boolean>>
 };
 
@@ -75,7 +75,7 @@ const UserProfileInfo = ({ user, posts, profileId, setShowEdit }: ProfileProps) 
             </div>
 
             {/* If user is not on others profile that means he is opening his profile so we will give edit button */}
-            {!profileId && (
+            {profileId && (
               <button
                 onClick={() => setShowEdit(true)}
                 className="flex items-center gap-2 border border-gray-300 hover:bg-gray-50 px-4 py-2

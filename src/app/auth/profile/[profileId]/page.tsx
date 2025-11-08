@@ -9,13 +9,14 @@ import UserProfileInfo from "@/components/UserProfileInfo";
 import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import moment from "moment";
+import ProfileModal from "@/components/ProfileModal";
 
 type UserData = typeof dummyUserData;
 type PostsData = typeof dummyPostsData;
 
 const Proflie = () => {
 
-    const { profileId } = useParams() as { profileId: string | number };
+    const { profileId } = useParams() as { profileId: string };
 
     const [user, setUser] = useState<UserData | null>(null);
     const [posts, setPosts] = useState<PostsData>([]);
@@ -116,7 +117,7 @@ const Proflie = () => {
             </div>
 
             {/* EFIT PROFILE MODAL */}
-            {showEdit && <p>Show profile edit</p>}
+            {showEdit && <ProfileModal setShowEdit={setShowEdit} />}
         </div>
     ) : (
         <Loading />
