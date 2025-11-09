@@ -46,8 +46,7 @@ export async function POST(req: NextRequest) {
       case "user.updated": {
         const email = data.email_addresses?.[0]?.email_address ?? "";
         const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim() || email.split("@")[0];
-        const username =
-          (data.first_name ? data.first_name.toLowerCase() : email.split("@")[0]) +
+        const username = (data.first_name ? data.first_name.toLowerCase() : email.split("@")[0]) +
           Math.floor(Math.random() * 10000);
 
         const userData = {
