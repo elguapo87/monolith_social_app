@@ -26,7 +26,7 @@ export const handleClerkUserCreated = inngest.createFunction(
         const userData = {
           _id: data.id,
           email: data.email_addresses?.[0]?.email_address ?? "",
-          full_Name: fullName,
+          full_name: fullName,
           user_name:
             data.username ||
             fullName.replace(/\s+/g, "").toLowerCase() +
