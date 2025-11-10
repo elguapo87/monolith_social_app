@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.34.4",
+    "inngest": "^3.45.0",
     "lucide-react": "^0.552.0",
     "moment": "^2.30.1",
     "mongoose": "^8.19.3",
