@@ -15,6 +15,7 @@ type ClerkEvent = {
     type: string; // e.g., "user.created"
     data: ClerkUser;
     object: string;
+    // Add more fields here if needed
 };
 
 
