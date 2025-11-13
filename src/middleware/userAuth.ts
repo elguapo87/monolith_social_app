@@ -12,13 +12,12 @@ export const protectUser = async () => {
 
         await connectDB();
 
-        // Check if user exists in DB
         const user = await userModel.findById(userId);
         if (!user) {
-            return { authorized: false, user: null };
+            return {  authorized: false, user: null }; 
         }
 
-        return { authorized: true, userId };
+        return { authorized: true, user }
 
     } catch (error) {
         console.error("protectUser error:", error);
