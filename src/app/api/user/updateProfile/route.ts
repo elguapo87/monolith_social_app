@@ -48,7 +48,15 @@ export async function POST(req: Request) {
                 fileName: `profile_${user._id}_${Date.now()}.jpg`,
                 folder: "/monolith/profiles"
             });
-            profile_picture = uploadResponse.url;
+
+            profile_picture = imageKit.url({
+                src: uploadResponse.url,
+                transformation: [
+                    { quality: "auto" },
+                    { format: "webp" },
+                    { width: "512" }
+                ]
+            })
         }
 
         if (coverFile && coverFile.size > 0) {
@@ -59,7 +67,14 @@ export async function POST(req: Request) {
                 fileName: `cover_${user._id}_${Date.now()}.jpg`,
                 folder: "/monolith/covers"
             });
-            cover_photo = uploadResponse.url;
+            cover_photo = imageKit.url({
+                src: uploadResponse.url,
+                transformation: [
+                    { quality: "auto" },
+                    { format: "webp" },
+                    { width: "1280" }
+                ]
+            });
         }
 
         const updateData = {
