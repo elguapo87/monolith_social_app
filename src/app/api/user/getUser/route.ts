@@ -18,6 +18,6 @@ export async function GET() {
 
     } catch (error) {
         console.log(error);
-        return NextResponse.json({ success: true, message: "User not found" });
+        return NextResponse.json({ success: false, message: "User not found" });
     }
 }
