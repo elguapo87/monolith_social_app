@@ -21,18 +21,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
         }
 
-        if (authUser.following.includes(targetUserId)) {
-            return NextResponse.json({ 
-                success: false, message: "You are already following this user" 
-            }, { status: 400 });
+        if (!authUser.following.includes(targetUserId)) {
+            return NextResponse.json({ success: false, message: "You are not following this user" }, { status: 400 });
         }
 
-        authUser.following.push(targetUserId);
-        targetUser.followers.push(authUser._id);
+        authUser.following.pull(targetUserId);
+        targetUser.followers.pull(authUser._id);
 
         await Promise.all([authUser.save(), targetUser.save()]);
 
-        return NextResponse.json({ success: true, message: "You are now following this user" });
+        return NextResponse.json({ success: true, message: "You are not following this user anymore" });
 
     } catch (error) {
         const errMesage = error instanceof Error ? error.message : "An unknown error occurred";
