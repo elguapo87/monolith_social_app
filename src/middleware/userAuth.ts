@@ -1,7 +1,6 @@
 import connectDB from "@/config/db";
 import userModel from "@/models/userModel";
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 
 export const protectUser = async () => {
     try {
