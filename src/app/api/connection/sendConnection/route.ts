@@ -1,6 +1,7 @@
 import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
 import { NextResponse } from "next/server";
+import { sendAppEvent } from "@/inngest/client";
 
 export async function POST(req: Request) {
     try {
@@ -35,9 +36,13 @@ export async function POST(req: Request) {
         });
 
         if (!connection) {
-            await connectionModel.create({
+            const newConnection = await connectionModel.create({
                 from_user_id: user._id,
                 to_user_id: id,
+            });
+
+            await sendAppEvent("app/connection-request", {
+                data: { connectionId: newConnection._id }
             });
 
             return NextResponse.json({ success: true, message: "Connection request sent successfully" });
