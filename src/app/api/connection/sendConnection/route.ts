@@ -53,6 +53,4 @@ export async function POST(req: Request) {
         console.log(error);
         return NextResponse.json({ success: false, message: errMesage });
     }
-
-
 }
