@@ -74,7 +74,6 @@ export async function POST(req: Request) {
             media_url,
             media_type,
             background_color: background_color || "",
-            view_count: []
         });
 
         return NextResponse.json({
@@ -91,3 +90,4 @@ export async function POST(req: Request) {
         );
     }
 }
+
