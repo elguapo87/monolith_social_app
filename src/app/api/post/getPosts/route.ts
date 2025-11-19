@@ -20,7 +20,7 @@ export async function GET() {
         return NextResponse.json({ success: true, posts });
 
     } catch (error) {
-        console.error("Add post error:", error);
+        console.error("Get posts error:", error);
         return NextResponse.json(
             { success: false, message: "Failed to get posts" },
             { status: 500 }
