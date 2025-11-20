@@ -1,4 +1,5 @@
 import imageKit from "@/config/imageKit";
+import { inngest } from "@/inngest/client";
 import { protectUser } from "@/middleware/userAuth";
 import storyModel from "@/models/storyModel";
 import { NextResponse } from "next/server";
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
             media_type = "text";
         }
 
-        const createdStory = storyModel.create({
+        const story = await storyModel.create({
             user: authUser._id,
             content: content || "",
             media_url,
@@ -76,10 +77,15 @@ export async function POST(req: Request) {
             background_color: background_color || "",
         });
 
+        // Schedule story deletion after 24hr
+        await inngest.send({
+            name: "app/story-delete",
+            data: { storyId:  story._id.toString()}
+        })
+
         return NextResponse.json({
             success: true,
-            message: "Story created successfully",
-            data: createdStory
+            message: "Story added",
         });
 
     } catch (error) {
