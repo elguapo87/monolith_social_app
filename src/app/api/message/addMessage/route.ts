@@ -2,6 +2,7 @@ import imageKit from "@/config/imageKit";
 import { protectUser } from "@/middleware/userAuth";
 import messageModel from "@/models/messageModel";
 import userModel from "@/models/userModel";
+import connections from "@/sse/connections";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -68,6 +69,15 @@ export async function POST(req: Request) {
             media_url: msgImage,
             message_type
         });
+
+        // Send SSE event to receiver if online
+        if (connections[to_user_id]) {
+            const writer = connections[to_user_id];
+
+            await writer.write(
+                `event: new-message\ndata: ${JSON.stringify(message)}\n\n`
+            );
+        }
 
         return NextResponse.json({ success: true, message });
 
