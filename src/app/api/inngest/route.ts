@@ -5,6 +5,7 @@ import { handleClerkUserDeleted } from "@/inngest/functions/userDeleted";
 import { handleClerkUserUpdated } from "@/inngest/functions/userUpdated";
 import { sendNewConnectionRequestReminder } from "@/inngest/functions/connectionRequest";
 import { deleteStory } from "@/inngest/functions/deleteStory";
+import { sendNotificationOfUnseenMessages } from "@/inngest/functions/unseenMessagesNotification";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -13,6 +14,7 @@ export const { GET, POST, PUT } = serve({
     handleClerkUserDeleted,
     handleClerkUserUpdated,
     sendNewConnectionRequestReminder,
-    deleteStory
+    deleteStory,
+    sendNotificationOfUnseenMessages
   ],
 });
