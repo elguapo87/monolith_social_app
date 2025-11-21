@@ -3,6 +3,8 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "react-hot-toast";
+import { Provider } from "react-redux";
+import { store } from "@/redux/store";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -26,7 +28,9 @@ export default function RootLayout({
       <body className={`${outfit.className} antialiased`}>
         <Toaster />
         <ClerkProvider>
-          {children}
+          <Provider store={store}>
+            {children}
+          </Provider>
         </ClerkProvider>
       </body>
     </html>
