@@ -10,7 +10,7 @@ export async function GET() {
         }
 
         const userData = await userModel.findById(user._id);
-        if (!user) {
+        if (!userData) {
             return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
         }
 
