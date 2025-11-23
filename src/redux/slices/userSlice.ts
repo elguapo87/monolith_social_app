@@ -1,4 +1,4 @@
-import api from "@/lib/axios"
+import api from "@/lib/axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { AxiosError } from "axios";
 import toast from "react-hot-toast";
@@ -9,26 +9,6 @@ interface User {
     email: string;
 }
 
-interface GetUserResponse {
-    success: boolean;
-    userData?: User;
-}
-
-interface ErrorResponse {
-    message: string;
-}
-
-interface UpdateUserPayload {       // argument type
-    userData: FormData;
-    token: string;
-}
-
-interface UpdateUserResponse {      // return type
-    success: boolean;
-    data?: User;
-    message: string;
-}
-
 interface UserState {
     value: User | null;
 }
@@ -37,7 +17,12 @@ const initialState: UserState = {
     value: null
 }
 
-export const fetchUser = createAsyncThunk<User | null, string, { rejectValue: ErrorResponse | string }>("user/getUser", async (token, { rejectWithValue }) => {
+interface UpdateUserPayload {
+    userData: FormData;
+    token: string;
+}
+
+export const fetchUser = createAsyncThunk("user/getUser", async (token, { rejectWithValue }) => {
     try {
         const { data } = await api.get("/user/getUser", {
             headers: { Authorization: `Bearer ${token}` }
@@ -45,23 +30,21 @@ export const fetchUser = createAsyncThunk<User | null, string, { rejectValue: Er
 
         if (data.success && data.userData) {
             return data.userData;
-        }
+        } 
 
+        toast.error(data.message);
         return null;
-
+        
     } catch (err) {
-        const error = err as AxiosError<ErrorResponse>;
-
+        const error = err as AxiosError;
         if (error.response?.data) {
-            return rejectWithValue(error.response.data);
+            rejectWithValue(error.response.data);
         }
-
-        return rejectWithValue("Request failed")
+        return rejectWithValue("Request failed");
     }
-})
+});
 
-
-export const updateProfile = createAsyncThunk<UpdateUserResponse, UpdateUserPayload, { rejectValue: string | object }>("user/updateProfile", async ({ userData, token }, { rejectWithValue }) => {
+export const updateProfile = createAsyncThunk("user/updateProfile", async ({ userData, token }: UpdateUserPayload, { rejectWithValue }) => {
     try {
         const { data } = await api.post("/user/updateProfile", userData, {
             headers: { Authorization: `Bearer ${token}` }
@@ -69,19 +52,18 @@ export const updateProfile = createAsyncThunk<UpdateUserResponse, UpdateUserPayl
 
         if (data.success) {
             toast.success(data.message);
-            return data;
+            return data.data;
         }
 
         toast.error(data.message);
-        return rejectWithValue(data);
+        rejectWithValue(data);
+
 
     } catch (err) {
         const error = err as AxiosError;
-
-        if (error.response?.data) {
-            return rejectWithValue(error.response.data);
+        if (error?.response?.data) {
+            rejectWithValue(error.response.data);
         }
-
         return rejectWithValue("Request failed");
     }
 });
@@ -93,11 +75,11 @@ const userSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder.addCase(fetchUser.fulfilled, (state, action) => {
-            state.value = action.payload
+            state.value = action.payload;
         }).addCase(updateProfile.fulfilled, (state, action) => {
-            state.value = action.payload.data ?? state.value;
+            state.value = action.payload
         });
     }
 })
 
-export default userSlice.reducer
+export default userSlice.reducer;
