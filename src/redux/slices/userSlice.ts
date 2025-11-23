@@ -22,7 +22,7 @@ interface UpdateUserPayload {
     token: string;
 }
 
-export const fetchUser = createAsyncThunk("user/getUser", async (token, { rejectWithValue }) => {
+export const fetchUser = createAsyncThunk("user/getUser", async (token: string, { rejectWithValue }) => {
     try {
         const { data } = await api.get("/user/getUser", {
             headers: { Authorization: `Bearer ${token}` }
