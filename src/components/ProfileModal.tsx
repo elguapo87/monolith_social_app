@@ -2,6 +2,8 @@ import { useState } from "react";
 import { assets, dummyUserData } from "../../public/assets";
 import Image from "next/image";
 import { Pencil } from "lucide-react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type ProfileProps = {
     setShowEdit: React.Dispatch<React.SetStateAction<boolean>>;
@@ -9,22 +11,22 @@ type ProfileProps = {
 
 const ProfileModal = ({ setShowEdit }: ProfileProps) => {
 
-    const user = dummyUserData;
+    const user = useSelector((state: RootState) => state.user.value);
 
     const [editForm, setEditForm] = useState<{
-        username: string;
+        user_name: string;
         bio: string;
         location: string;
         profile_picture: File | null;
         cover_photo: File | null;
         full_name: string;
     }>({
-        username: user.username,
-        bio: user.bio,
-        location: user.location,
+        user_name: user?.user_name ?? "",
+        bio: user?.bio ?? "",
+        location: user?.location ?? "",
         profile_picture: null,
         cover_photo: null,
-        full_name: user.full_name
+        full_name: user?.full_name ?? ""
     });
 
     const handleSaveProfile = async (e: React.FormEvent) => {
@@ -130,9 +132,9 @@ const ProfileModal = ({ setShowEdit }: ProfileProps) => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
                             <input
                                 onChange={(e) => setEditForm((prev) => ({
-                                    ...prev, username: e.target.value
+                                    ...prev, user_name: e.target.value
                                 }))}
-                                value={editForm.username}
+                                value={editForm.user_name}
                                 type="text"
                                 className="w-full p-3 border border-gray-200 rounded-lg"
                                 placeholder="Please enter a username"

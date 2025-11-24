@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { assets, dummyPostsData, dummyUserData } from "../../public/assets"
+import { assets, dummyPostsData } from "../../public/assets"
 import Image from "next/image";
 import { BadgeCheck, Heart, MessageCircle, Share2 } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type PostType = typeof dummyPostsData[number];
 
@@ -12,7 +14,10 @@ const PostCard = ({ post }: { post: PostType }) => {
     const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>');
 
     const [likes, setLikes] = useState(post.likes_count);
-    const currentUser = dummyUserData;
+    const currentUser = useSelector((state: RootState) => state.user.value);
+
+    console.log(currentUser);
+    
 
     const router = useRouter();
 
@@ -74,7 +79,7 @@ const PostCard = ({ post }: { post: PostType }) => {
                     <Heart 
                         onClick={handleLike}
                         className={`w-4 h-4 cursor-pointer 
-                            ${likes.includes(currentUser._id) && "text-red-500 fill-red-500"}`} 
+                            ${likes.includes(currentUser?._id ?? "") && "text-red-500 fill-red-500"}`} 
                     />
                     <span>{likes.length}</span>
                 </div>

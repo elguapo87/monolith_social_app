@@ -16,9 +16,6 @@ const CreatePost = () => {
 
     const user = useSelector((state: RootState) => state.user.value);
 
-    console.log(user);
-    
-
     const handleSubmit = async () => {
 
     };

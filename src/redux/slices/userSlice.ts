@@ -9,6 +9,9 @@ interface User {
     email: string;
     profile_picture?: string;
     user_name?: string;
+    bio?: string;
+    location?: string;
+    cover_photo?: string;
 }
 
 interface UserState {
