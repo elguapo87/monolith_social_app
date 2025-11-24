@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { assets, dummyUserData } from "../../public/assets";
+import { assets } from "../../public/assets";
 import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useSelector } from "react-redux";

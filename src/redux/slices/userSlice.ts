@@ -12,6 +12,9 @@ interface User {
     bio?: string;
     location?: string;
     cover_photo?: string;
+    followers?: string[];
+    following?: string[];
+    connections?: string[];
 }
 
 interface UserState {

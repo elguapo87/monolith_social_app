@@ -1,6 +1,7 @@
 import Image, { StaticImageData } from "next/image";
-import { dummyUserData } from "../../public/assets"
 import { MapPin, MessageCircle, Plus, UserPlus } from "lucide-react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type UserProps = {
     user: {
@@ -24,7 +25,7 @@ type UserProps = {
 
 const UserCard = ({ user }: UserProps) => {
 
-    const currentUser = dummyUserData;
+    const currentUser = useSelector((state: RootState) => state.user.value);
 
     const handleFollow = async () => {
 
@@ -67,13 +68,13 @@ const UserCard = ({ user }: UserProps) => {
                 {/* FOLLOW BUTTON */}
                 <button
                     onClick={handleFollow}
-                    disabled={currentUser?.followers.includes(user._id)}
+                    disabled={currentUser?.followers?.includes(user._id)}
                     className="w-full py-2 rounded-md flex justify-center items-center gap-2 bg-linear-to-r
                         from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700
                         active:scale-95 transition text-white cursor-pointer"
                 >
                     <UserPlus className="w-4 h-4" />
-                    {currentUser?.following.includes(user._id) ? "Following" : "Follow"}
+                    {currentUser?.following?.includes(user._id) ? "Following" : "Follow"}
                 </button>
 
                 {/* CONNECTION REQUEST BUTTON / MESSAGE BUTTON */}
@@ -82,7 +83,7 @@ const UserCard = ({ user }: UserProps) => {
                     className="flex items-center justify-center w-16 border text-slate-500 group rounded-md
                         cursor-pointer active:scale-95 transition"
                 >
-                    {currentUser.connections.includes(user._id) ? (
+                    {currentUser?.connections?.includes(user._id) ? (
                         <MessageCircle className="w-5 h-5 group-hover:scale-105 transition" />
                     ) : (
                         <Plus className="w-5 h-5 group-hover:scale-105 transition" />
