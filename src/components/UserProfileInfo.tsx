@@ -1,51 +1,46 @@
 import { Calendar, MapPin, PenBox, Verified } from "lucide-react";
 import moment from "moment";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
+import { assets } from "../../public/assets";
 
 type ProfileProps = {
   user: {
     _id: string;
-    email: string;
     full_name: string;
-    username: string;
-    bio: string;
-    profile_picture: StaticImageData;
-    cover_photo: StaticImageData;
-    location: string;
-    followers: string[];
-    following: string[];
-    connections: string[];
-    posts: never[];
-    is_verified: boolean;
-    createdAt: string;
-    updatedAt: string;
+    email: string;
+    profile_picture?: string;
+    user_name?: string;
+    bio?: string;
+    location?: string;
+    cover_photo?: string;
+    followers?: string[];
+    following?: string[];
+    connections?: string[];
+    createdAt?: Date;
   } | null;
 
   posts: {
     _id: string;
     user: {
-      _id: string;
-      email: string;
-      full_name: string;
-      username: string;
-      bio: string;
-      profile_picture: StaticImageData;
-      cover_photo: StaticImageData;
-      location: string;
-      followers: string[];
-      following: string[];
-      connections: string[];
-      posts: never[];
-      is_verified: boolean;
-      createdAt: string;
-      updatedAt: string;
-    };
+        _id: string;
+        full_name: string;
+        email: string;
+        profile_picture?: string;
+        user_name?: string;
+        bio?: string;
+        location?: string;
+        cover_photo?: string;
+        followers?: string[];
+        following?: string[];
+        connections?: string[];
+        createdAt?: Date;
+    },
     content: string;
     image_urls: string[];
     post_type: string;
     likes_count: string[];
-    createdAt: string;
-    updatedAt: string;
+    createdAt?: Date;
+    updatedAt?: Date; 
   }[];
 
   profileId: string;
@@ -59,7 +54,12 @@ const UserProfileInfo = ({ user, posts, profileId, setShowEdit }: ProfileProps) 
 
         <div className="w-32 h-32 border-4 border-white shadow-lg absolute -top-16 rounded-full">
           {user?.profile_picture && (
-            <Image src={user.profile_picture} alt="" className="absolute rounded-full z-2" />
+            <Image
+              src={user.profile_picture || assets.avatar_icon}
+              alt=""
+              fill
+              className="absolute aspect-square rounded-full z-2"
+            />
           )}
         </div>
 
@@ -71,7 +71,7 @@ const UserProfileInfo = ({ user, posts, profileId, setShowEdit }: ProfileProps) 
                 <Verified className="w-6 h-6 text-blue-500" />
               </div>
 
-              <p className="text-gray-600">{user?.username ? `@${user.username}` : "Add a username"}</p>
+              <p className="text-gray-600">{user?.user_name ? `@${user.user_name}` : "Add a username"}</p>
             </div>
 
             {/* If user is not on others profile that means he is opening his profile so we will give edit button */}
@@ -106,11 +106,11 @@ const UserProfileInfo = ({ user, posts, profileId, setShowEdit }: ProfileProps) 
               <span className="text-xs sm:text-sm text-gray-500 ml-1.5">Posts</span>
             </div>
             <div>
-              <span className="sm:text-xl font-bold text-gray-900">{user?.followers.length}</span>
+              <span className="sm:text-xl font-bold text-gray-900">{user?.followers?.length}</span>
               <span className="text-xs sm:text-sm text-gray-500 ml-1.5">Followers</span>
             </div>
             <div>
-              <span className="sm:text-xl font-bold text-gray-900">{user?.following.length}</span>
+              <span className="sm:text-xl font-bold text-gray-900">{user?.following?.length}</span>
               <span className="text-xs sm:text-sm text-gray-500 ml-1.5">Following</span>
             </div>
           </div>

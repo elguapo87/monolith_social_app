@@ -7,7 +7,29 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 
-type PostType = typeof dummyPostsData[number];
+type PostType = {
+    _id: string;
+    user: {
+        _id: string;
+        full_name: string;
+        email: string;
+        profile_picture?: string;
+        user_name?: string;
+        bio?: string;
+        location?: string;
+        cover_photo?: string;
+        followers?: string[];
+        following?: string[];
+        connections?: string[];
+        createdAt?: Date;
+    },
+    content: string;
+    image_urls: string[];
+    post_type: string;
+    likes_count: string[];
+    createdAt?: Date;
+    updatedAt?: Date;
+};
 
 const PostCard = ({ post }: { post: PostType }) => {
 
@@ -45,7 +67,7 @@ const PostCard = ({ post }: { post: PostType }) => {
                     </div>
 
                     <div className="text-gray-500 text-sm">
-                        @{post.user.username} &bull; {moment(post.createdAt).fromNow()}
+                        @{post.user.user_name} &bull; {moment(post.createdAt).fromNow()}
                     </div>
                 </div>
             </div>

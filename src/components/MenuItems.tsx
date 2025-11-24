@@ -3,12 +3,17 @@ import { usePathname } from 'next/navigation';
 import Loading from './Loading';
 import { Home, MessageCircle, Search, UserIcon, Users } from 'lucide-react'
 import Link from 'next/link';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { current } from '@reduxjs/toolkit';
 
 type SidebarProps = {
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const MenuItems = ({ setSidebarOpen }: SidebarProps) => {
+
+  const currentUser = useSelector((state: RootState) => state.user.value);
 
   const pathName = usePathname();
   const { user, isLoaded } = useUser();
@@ -22,11 +27,7 @@ const MenuItems = ({ setSidebarOpen }: SidebarProps) => {
     { to: '/auth/messages', label: 'Messages', Icon: MessageCircle },
     { to: '/auth/connections', label: 'Connections', Icon: Users },
     { to: '/auth/discover', label: 'Discover', Icon: Search },
-    {
-      to: user ? `/auth/profile/${user.id}` : "#",
-      label: 'Profile',
-      Icon: UserIcon
-    },
+    { to: "/auth/profile", label: 'Profile', Icon: UserIcon },
   ];
 
   return (

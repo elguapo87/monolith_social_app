@@ -3,7 +3,7 @@ import postModel from "@/models/postModel";
 import userModel from "@/models/userModel";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
     try {
         const { authorized, user: authUser } = await protectUser();
         if (!authorized || !authUser) {

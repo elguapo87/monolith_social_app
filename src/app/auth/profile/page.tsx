@@ -1,8 +1,6 @@
 "use client"
 
-import { useParams } from "next/navigation"
 import { useEffect, useState } from "react";
-import { assets } from "../../../../../public/assets";
 import Loading from "@/components/Loading";
 import Image from "next/image";
 import UserProfileInfo from "@/components/UserProfileInfo";
@@ -13,6 +11,9 @@ import ProfileModal from "@/components/ProfileModal";
 import { useAuth } from "@clerk/nextjs";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { assets } from "../../../../public/assets";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type UserData = {
     _id: string;
@@ -52,9 +53,11 @@ type PostsData = {
     updatedAt?: Date;
 }; 
 
-const Profile = () => {
+const CurrentProfile = () => {
 
-    const { profileId } = useParams() as { profileId: string };
+    const currentUser = useSelector((state: RootState) => state.user.value);
+
+    const currentUserId = currentUser?._id;
 
     const [user, setUser] = useState<UserData | null>(null);
     const [posts, setPosts] = useState<PostsData[]>([]);
@@ -64,11 +67,11 @@ const Profile = () => {
     const { getToken } = useAuth();
 
     useEffect(() => {
-        const fetchUser = async (profileId: string) => {
+        const fetchUser = async (currentUserId: string) => {
             const token = await getToken();
 
             try {
-                const { data } = await api.post("/user/getUserProfiles", { profileId }, {
+                const { data } = await api.post("/user/getUserProfiles", { profileId: currentUserId }, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (data.success) {
@@ -85,9 +88,9 @@ const Profile = () => {
             }
         };
    
-        fetchUser(profileId);
+        fetchUser(currentUserId ?? "");
 
-    }, [profileId]);
+    }, [currentUserId]);
 
     return user ? (
         <div className="relative h-full overflow-y-scroll bg-gray-50 p-6">
@@ -112,7 +115,7 @@ const Profile = () => {
                     <UserProfileInfo
                         user={user}
                         posts={posts}
-                        profileId={profileId}
+                        profileId={currentUserId ?? ""}
                         setShowEdit={setShowEdit}
                     />
                 </div>
@@ -181,4 +184,4 @@ const Profile = () => {
     )
 }
 
-export default Profile
+export default CurrentProfile
