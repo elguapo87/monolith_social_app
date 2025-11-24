@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { assets, dummyUserData } from "../../../../public/assets";
+import { assets } from "../../../../public/assets";
 import Image from "next/image";
 import { X, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const CreatePost = () => {
 
@@ -12,7 +14,10 @@ const CreatePost = () => {
     const [images, setImages] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const user = dummyUserData;
+    const user = useSelector((state: RootState) => state.user.value);
+
+    console.log(user);
+    
 
     const handleSubmit = async () => {
 
@@ -32,15 +37,15 @@ const CreatePost = () => {
                     {/* HEADER */}
                     <div className="flex items-center gap-3">
                         <Image 
-                            src={user.profile_picture || assets.avatar_icon} 
+                            src={user?.profile_picture || assets.avatar_icon} 
                             alt=""
                             width={48}
                             height={48} 
                             className="size-12 rounded-full shadow" 
                         />
                         <div>
-                            <h2 className="font-semibold">{user.full_name}</h2>
-                            <p className="text-sm text-gray-500">@{user.username}</p>
+                            <h2 className="font-semibold">{user?.full_name}</h2>
+                            <p className="text-sm text-gray-500">@{user?.user_name}</p>
                         </div>
                     </div>
 

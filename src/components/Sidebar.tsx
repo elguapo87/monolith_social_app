@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { assets, dummyUserData } from "../../public/assets";
+import { assets } from "../../public/assets";
 import MenuItems from "./MenuItems";
 import Link from "next/link";
 import { CirclePlus, LogOut } from "lucide-react";
-
 import { UserButton, useClerk } from "@clerk/nextjs";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type AuthLayoutProps = {
   sidebarOpen: boolean;
@@ -16,7 +17,7 @@ type AuthLayoutProps = {
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen } : AuthLayoutProps) => {
 
-  const user = dummyUserData;
+  const user = useSelector((state: RootState) => state.user.value);
   const { signOut } = useClerk();
 
   const router = useRouter();
@@ -56,8 +57,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen } : AuthLayoutProps) => {
         <div className="flex gap-2 items-center cursor-pointer">
           <UserButton />
           <div>
-            <h1 className="text-sm font-medium">{user.full_name}</h1>
-            <p className="text-xs text-gray-500">@{user.username}</p>
+            <h1 className="text-sm font-medium">{user?.full_name}</h1>
+            <p className="text-xs text-gray-500">@{user?.user_name}</p>
           </div>
         </div>
 
