@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { assets, dummyPostsData } from "../../public/assets"
+import { assets } from "../../public/assets"
 import Image from "next/image";
 import { BadgeCheck, Heart, MessageCircle, Share2 } from "lucide-react";
 import moment from "moment";
@@ -37,9 +37,6 @@ const PostCard = ({ post }: { post: PostType }) => {
 
     const [likes, setLikes] = useState(post.likes_count);
     const currentUser = useSelector((state: RootState) => state.user.value);
-
-    console.log(currentUser);
-    
 
     const router = useRouter();
 

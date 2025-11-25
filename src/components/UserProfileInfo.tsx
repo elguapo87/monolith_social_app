@@ -2,6 +2,8 @@ import { Calendar, MapPin, PenBox, Verified } from "lucide-react";
 import moment from "moment";
 import Image from "next/image";
 import { assets } from "../../public/assets";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type ProfileProps = {
   user: {
@@ -43,11 +45,17 @@ type ProfileProps = {
     updatedAt?: Date; 
   }[];
 
-  profileId: string;
   setShowEdit: React.Dispatch<React.SetStateAction<boolean>>
 };
 
-const UserProfileInfo = ({ user, posts, profileId, setShowEdit }: ProfileProps) => {
+const UserProfileInfo = ({ user, posts, setShowEdit }: ProfileProps) => {
+
+  const currentUser = useSelector((state: RootState) => state.user.value);
+  const currentUserId = currentUser?._id;
+
+  console.log("currentUserId:", currentUserId, "userId:",user?._id);
+  
+
   return (
     <div className="relative py-4 px-6 md:px-8 bg-white">
       <div className="flex flex-col md:flex-row items-start gap-6">
@@ -75,7 +83,7 @@ const UserProfileInfo = ({ user, posts, profileId, setShowEdit }: ProfileProps) 
             </div>
 
             {/* If user is not on others profile that means he is opening his profile so we will give edit button */}
-            {profileId && (
+            {currentUserId === user?._id && (
               <button
                 onClick={() => setShowEdit(true)}
                 className="flex items-center gap-2 border border-gray-300 hover:bg-gray-50 px-4 py-2

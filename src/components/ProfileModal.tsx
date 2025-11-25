@@ -2,16 +2,22 @@ import { useState } from "react";
 import { assets } from "../../public/assets";
 import Image from "next/image";
 import { Pencil } from "lucide-react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { useAuth } from "@clerk/nextjs";
+import { updateProfile } from "@/redux/slices/userSlice";
+import toast from "react-hot-toast";
 
 type ProfileProps = {
     setShowEdit: React.Dispatch<React.SetStateAction<boolean>>;
+    onUpdated?: () => void;
 };
 
-const ProfileModal = ({ setShowEdit }: ProfileProps) => {
+const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
 
     const user = useSelector((state: RootState) => state.user.value);
+    const { getToken } = useAuth();
+    const dispatch = useDispatch<AppDispatch>();
 
     const [editForm, setEditForm] = useState<{
         user_name: string;
@@ -31,7 +37,36 @@ const ProfileModal = ({ setShowEdit }: ProfileProps) => {
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const token = await getToken() as string;
+
+        const formData = new FormData();
+        formData.append("full_name", editForm.full_name);
+        formData.append("user_name", editForm.user_name);
+        formData.append("location", editForm.location);
+        formData.append("bio", editForm.bio);
+
+        editForm.profile_picture && formData.append("profile", editForm.profile_picture);
+        editForm.cover_photo && formData.append("cover", editForm.cover_photo);
+
+        try {
+            await dispatch(updateProfile({ userData: formData, token }));
+            onUpdated?.();
+            setShowEdit(false);
+
+        } catch (error) {
+            const errMessage = error instanceof Error ? error.message : "An unknown error occurred";
+            toast.error(errMessage);
+        }
+
     };
+
+    const previewImage = 
+        editForm.profile_picture
+            ? URL.createObjectURL(editForm.profile_picture)
+            : user?.profile_picture
+                ? user.profile_picture
+                : assets.avatar_icon
 
     return (
         <div className="fixed top-0 bottom-0 left-0 right-0 z-110 h-screen overflow-y-scroll bg-black/50">
@@ -59,9 +94,7 @@ const ProfileModal = ({ setShowEdit }: ProfileProps) => {
 
                                 <div className="group/profile relative">
                                     <Image
-                                        src={editForm.profile_picture ?
-                                            URL.createObjectURL(editForm.profile_picture) :
-                                            assets.avatar_icon}
+                                        src={previewImage}
                                         alt=""
                                         width={96}
                                         height={96}
