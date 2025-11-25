@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { assets } from "../../../../../public/assets";
 import Loading from "@/components/Loading";
 import Image from "next/image";
@@ -10,9 +10,6 @@ import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import moment from "moment";
 import ProfileModal from "@/components/ProfileModal";
-import { useAuth } from "@clerk/nextjs";
-import api from "@/lib/axios";
-import toast from "react-hot-toast";
 import { useProfile } from "@/hooks/useProfile";
 
 const Profile = () => {
@@ -49,6 +46,7 @@ const Profile = () => {
                     <UserProfileInfo
                         user={user}
                         posts={posts}
+                        profileId={profileId}
                         setShowEdit={setShowEdit}
                     />
                 </div>

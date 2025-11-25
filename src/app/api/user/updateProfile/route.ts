@@ -78,6 +78,7 @@ export async function POST(req: Request) {
         }
 
         const updateData = {
+            _id: user._id,
             full_name: full_name || tempUser.full_name,
             user_name,
             bio: bio || tempUser.bio,

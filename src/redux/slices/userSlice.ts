@@ -19,10 +19,12 @@ interface User {
 
 interface UserState {
     value: User | null;
+    loading: boolean;
 }
 
 const initialState: UserState = {
-    value: null
+    value: null,
+    loading: false
 }
 
 interface UpdateUserPayload {
@@ -40,15 +42,13 @@ export const fetchUser = createAsyncThunk("user/getUser", async (token: string, 
             return data.userData;
         } 
 
-        toast.error(data.message);
-        return null;
+        toast.error(data.message || "Failed to load user");
+        return rejectWithValue("Failed to load user");
         
     } catch (err) {
         const error = err as AxiosError;
-        if (error.response?.data) {
-            rejectWithValue(error.response.data);
-        }
-        return rejectWithValue("Request failed");
+        const message = (error.response?.data as Record<string, number>)?.message || "Request failed";
+        return rejectWithValue(message);
     }
 });
 
@@ -64,15 +64,13 @@ export const updateProfile = createAsyncThunk("user/updateProfile", async ({ use
         }
 
         toast.error(data.message);
-        rejectWithValue(data);
+        return rejectWithValue(data.message);
 
 
     } catch (err) {
         const error = err as AxiosError;
-        if (error?.response?.data) {
-            rejectWithValue(error.response.data);
-        }
-        return rejectWithValue("Request failed");
+        const message = (error.response?.data as Record<string, number>)?.message || "Request failed";
+        return rejectWithValue(message);
     }
 });
 
@@ -82,11 +80,27 @@ const userSlice = createSlice({
     initialState,
     reducers: {},
     extraReducers: (builder) => {
-        builder.addCase(fetchUser.fulfilled, (state, action) => {
-            state.value = action.payload;
-        }).addCase(updateProfile.fulfilled, (state, action) => {
-            state.value = action.payload
-        });
+        builder
+            .addCase(fetchUser.pending, (state)=> {
+                state.loading = true;
+            })
+            .addCase(fetchUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.value = action.payload!;
+            })
+            .addCase(fetchUser.rejected, (state) => {
+                state.loading = false;
+            })
+            .addCase(updateProfile.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(updateProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.value = action.payload!;
+            })
+            .addCase(updateProfile.rejected, (state) => {
+                state.loading = false;
+            });
     }
 })
 

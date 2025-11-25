@@ -51,8 +51,8 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
 
         try {
             await dispatch(updateProfile({ userData: formData, token }));
-            onUpdated?.();
             setShowEdit(false);
+            onUpdated?.();
 
         } catch (error) {
             const errMessage = error instanceof Error ? error.message : "An unknown error occurred";
@@ -61,12 +61,19 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
 
     };
 
-    const previewImage = 
+    const previewProfilePicture = 
         editForm.profile_picture
             ? URL.createObjectURL(editForm.profile_picture)
             : user?.profile_picture
                 ? user.profile_picture
                 : assets.avatar_icon
+
+    const previewCoverPhoto = 
+        editForm.cover_photo
+            ? URL.createObjectURL(editForm.cover_photo)
+            : user?.cover_photo
+                ? user.cover_photo
+                : assets.image_placeholder
 
     return (
         <div className="fixed top-0 bottom-0 left-0 right-0 z-110 h-screen overflow-y-scroll bg-black/50">
@@ -94,7 +101,7 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
 
                                 <div className="group/profile relative">
                                     <Image
-                                        src={previewImage}
+                                        src={previewProfilePicture}
                                         alt=""
                                         width={96}
                                         height={96}
@@ -129,9 +136,7 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
                                 />
                                 <div className="group/hover relative">
                                     <Image
-                                        src={editForm.cover_photo
-                                            ? URL.createObjectURL(editForm.cover_photo)
-                                            : assets.image_placeholder}
+                                        src={previewCoverPhoto}
                                         alt=""
                                         width={320}
                                         height={160}
