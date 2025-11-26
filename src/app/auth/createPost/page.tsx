@@ -3,12 +3,13 @@
 import { useState } from "react"
 import { assets } from "../../../../public/assets";
 import Image from "next/image";
-import { X, Image as ImageIcon, Images } from "lucide-react";
+import { X, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
 import api from "@/lib/axios";
+import { useRouter } from "next/navigation";
 
 const CreatePost = () => {
 
@@ -18,6 +19,8 @@ const CreatePost = () => {
 
     const user = useSelector((state: RootState) => state.user.value);
     const { getToken } = useAuth();
+
+    const router = useRouter();
 
     const handleSubmit = async () => {
         if (!images.length && !content.trim()) {
@@ -48,8 +51,7 @@ const CreatePost = () => {
 
             if (data.success) {
                 toast.success(data.message);
-                setContent("");
-                setImages([]);
+                router.push("/");
 
             } else {
                 toast.error(data.message);
