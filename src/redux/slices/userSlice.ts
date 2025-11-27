@@ -17,19 +17,39 @@ interface User {
     connections?: string[];
 }
 
+interface Post {
+    _id: string;
+    user: User;
+    content: string;
+    image_urls: string[];
+    post_type: string;
+    likes_count: string[];
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
 interface UserState {
     value: User | null;
     loading: boolean;
+    profileData: User | null;
+    profilePosts: Post[];
 }
 
 const initialState: UserState = {
     value: null,
-    loading: false
+    loading: false,
+    profileData: null,
+    profilePosts: []
 }
 
 interface UpdateUserPayload {
     userData: FormData;
     token: string;
+}
+
+interface GetUserProfilesPayload {
+    profileId: string;
+    token: string | null;
 }
 
 export const fetchUser = createAsyncThunk("user/getUser", async (token: string, { rejectWithValue }) => {
@@ -40,11 +60,11 @@ export const fetchUser = createAsyncThunk("user/getUser", async (token: string, 
 
         if (data.success && data.userData) {
             return data.userData;
-        } 
+        }
 
         toast.error(data.message || "Failed to load user");
         return rejectWithValue("Failed to load user");
-        
+
     } catch (err) {
         const error = err as AxiosError;
         const message = (error.response?.data as Record<string, number>)?.message || "Request failed";
@@ -75,13 +95,35 @@ export const updateProfile = createAsyncThunk("user/updateProfile", async ({ use
 });
 
 
+export const getUserProfiles = createAsyncThunk("user/getUserProfiles", async ({ profileId, token }: GetUserProfilesPayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/user/getUserProfiles", { profileId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to load profile");
+            return rejectWithValue(data.message || "Failed to load profile")
+        }
+
+        return {
+            profile: data.profile,
+            post: data.post
+        }
+
+    } catch (error) {
+        toast.error("Request failed");
+        return rejectWithValue("Request failed");
+    }
+});
+
 const userSlice = createSlice({
     name: "user",
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(fetchUser.pending, (state)=> {
+            .addCase(fetchUser.pending, (state) => {
                 state.loading = true;
             })
             .addCase(fetchUser.fulfilled, (state, action) => {
@@ -99,6 +141,17 @@ const userSlice = createSlice({
                 state.value = action.payload!;
             })
             .addCase(updateProfile.rejected, (state) => {
+                state.loading = false;
+            })
+            .addCase(getUserProfiles.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getUserProfiles.fulfilled, (state, action) => {
+                state.loading = false;
+                state.profileData = action.payload.profile;
+                state.profilePosts = action.payload.post;
+            })
+            .addCase(getUserProfiles.rejected, (state) => {
                 state.loading = false;
             });
     }
