@@ -32,12 +32,9 @@ const CreatePost = () => {
 
         const token = await getToken();
 
-        const post_type = images.length && content ? "text_with_image" : images.length ? "image" : "text";
-
         try {
             const formData = new FormData();
             formData.append("content", content);
-            formData.append("post_type", post_type);
 
             if (images.length) {
                 for (const file of images) {
