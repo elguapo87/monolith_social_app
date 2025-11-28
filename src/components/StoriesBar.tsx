@@ -1,23 +1,62 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { dummyStoriesData } from "../../public/assets";
+import { assets } from "../../public/assets";
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import moment from "moment";
 import StoryModal from "./StoryModal";
 import StoryViewer from "./StoryViewer";
+import { useAuth } from "@clerk/nextjs";
+import api from "@/lib/axios";
+import toast from "react-hot-toast";
 
-type StoriesType = typeof dummyStoriesData
+type StoriesType = {
+    _id: string
+    user: {
+        _id: string;
+        full_name: string;
+        email: string;
+        profile_picture?: string;
+        user_name?: string;
+        bio?: string;
+        location?: string;
+        cover_photo?: string;
+        followers?: string[];
+        following?: string[];
+        connections?: string[];
+    }
+    content: string;
+    media_url: string
+    media_type: string
+    background_color: string
+    createdAt?: Date;
+    updatedAt?: Date;
+}
 
 const StoriesBar = () => {
+    const { getToken } = useAuth();
 
-    const [stories, setStories] = useState<StoriesType>([]);
+    const [stories, setStories] = useState<StoriesType[]>([]);
     const [showModal, setShowModal] = useState(false);
-    const [viewStory, setViewStory] = useState<StoriesType[number] | null>(null);
+    const [viewStory, setViewStory] = useState<StoriesType | null>(null);
 
     const fetchStories = async () => {
-        setStories(dummyStoriesData);
+        try {
+            const token = await getToken();
+
+            const { data } = await api.get("/story/getStories", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (data.success) {
+                setStories(data.stories);
+            }
+
+        } catch (error) {
+            const errMessage = error instanceof Error ? error.message : "An unknown error occurred";
+            toast.error(errMessage);
+        }
     };
 
     useEffect(() => {
@@ -42,7 +81,7 @@ const StoriesBar = () => {
                             <Plus className="w-5 h-5 text-white" />
                         </div>
 
-                        <p 
+                        <p
                             className="text-sm font-medium text-slate-700 text-center
                              hover:scale-[1.03] transition-all duration-300"
                         >
@@ -61,7 +100,7 @@ const StoriesBar = () => {
                              to-purple-600 hover:from-indigo-700 hover:to-purple-800 active:scale-95"
                     >
                         <Image
-                            src={story.user.profile_picture}
+                            src={story.user.profile_picture || assets.avatar_icon}
                             alt=""
                             width={32}
                             height={32}

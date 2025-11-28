@@ -1,62 +1,34 @@
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { assets } from "../../public/assets";
 import { BadgeCheck, X } from "lucide-react";
 
-type Props = {
-  viewStory: {
+type StoriesType = {
+  _id: string
+  user: {
     _id: string;
-    user: {
-      _id: string;
-      email: string;
-      full_name: string;
-      username: string;
-      bio: string;
-      profile_picture: StaticImageData;
-      cover_photo: StaticImageData;
-      location: string;
-      followers: string[];
-      following: string[];
-      connections: string[];
-      posts: never[];
-      is_verified: boolean;
-      createdAt: string;
-      updatedAt: string;
-    };
-    content: string;
-    media_url: string;
-    media_type: string;
-    background_color: string;
-    createdAt: string;
-    updatedAt: string;
-  } | null;
+    full_name: string;
+    email: string;
+    profile_picture?: string;
+    user_name?: string;
+    bio?: string;
+    location?: string;
+    cover_photo?: string;
+    followers?: string[];
+    following?: string[];
+    connections?: string[];
+  }
+  content: string;
+  media_url: string
+  media_type: string
+  background_color: string
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
-  setViewStory: React.Dispatch<React.SetStateAction<{
-    _id: string;
-    user: {
-      _id: string;
-      email: string;
-      full_name: string;
-      username: string;
-      bio: string;
-      profile_picture: StaticImageData;
-      cover_photo: StaticImageData;
-      location: string;
-      followers: string[];
-      following: string[];
-      connections: string[];
-      posts: never[];
-      is_verified: boolean;
-      createdAt: string;
-      updatedAt: string;
-    };
-    content: string;
-    media_url: string;
-    media_type: string;
-    background_color: string;
-    createdAt: string;
-    updatedAt: string;
-  } | null>>;
+type Props = {
+  viewStory: StoriesType | null;
+  setViewStory: React.Dispatch<React.SetStateAction<StoriesType | null>>
 }
 
 const StoryViewer = ({ viewStory, setViewStory }: Props) => {
@@ -164,6 +136,8 @@ const StoryViewer = ({ viewStory, setViewStory }: Props) => {
         <Image
           src={viewStory.user.profile_picture || assets.avatar_icon}
           alt=""
+          width={28}
+          height={28}
           className="size-7 sm:size-8 rounded-full object-cover border border-white"
         />
 
