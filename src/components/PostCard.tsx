@@ -1,11 +1,12 @@
-import { useState } from "react";
 import { assets } from "../../public/assets"
 import Image from "next/image";
 import { BadgeCheck, Heart, MessageCircle, Share2 } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { useAuth } from "@clerk/nextjs";
+import { toggleLike } from "@/redux/slices/postSlice";
 
 type PostType = {
     _id: string;
@@ -35,13 +36,18 @@ const PostCard = ({ post }: { post: PostType }) => {
 
     const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>');
 
-    const [likes, setLikes] = useState(post.likes_count);
+    const dispatch = useDispatch<AppDispatch>();
+    const { getToken } = useAuth();
+
+    const likes = post.likes_count;
     const currentUser = useSelector((state: RootState) => state.user.value);
 
     const router = useRouter();
 
     const handleLike = async () => {
-        
+        const token = await getToken();
+        if (!token || !currentUser?._id) return;
+        dispatch(toggleLike({ postId: post._id, userId: currentUser._id, token }));
     };
 
     return (

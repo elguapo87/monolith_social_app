@@ -31,11 +31,19 @@ interface Post {
 interface PostState {
     posts: Post[];
     loading: boolean;
+    pendingLikeMap: Record<string, boolean>;
+}
+
+interface ToggleLikePayload {
+    postId: string;
+    userId: string;
+    token: string | null;
 }
 
 const initialState: PostState = {
     posts: [],
-    loading: false
+    loading: false,
+    pendingLikeMap: {}
 };
 
 export const getPosts = createAsyncThunk("post/getPosts", async (token: string | null, { rejectWithValue }) => {
@@ -58,6 +66,28 @@ export const getPosts = createAsyncThunk("post/getPosts", async (token: string |
     }
 });
 
+export const toggleLike = createAsyncThunk("post/toggleLike", async ({ postId, token }: ToggleLikePayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/post/like", { postId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to toggle like");
+            return rejectWithValue(data.message || "Failed to toggle like");
+        }
+
+        return {
+            postId,
+            message: data.message
+        };
+
+    } catch (error) {
+        toast.error("Failed to toggle like");
+        return rejectWithValue("Failed to toggle like");
+    }
+});
+
 const postSlice = createSlice({
     name: "post",
     initialState,
@@ -75,6 +105,87 @@ const postSlice = createSlice({
             .addCase(getPosts.rejected, (state) => {
                 state.loading = false;
             })
+            .addCase(toggleLike.pending, (state, action) => {
+                const { postId, userId } = action.meta.arg as ToggleLikePayload;
+                const post = state.posts.find((p) => p._id === postId);
+                if (!post) return;
+
+                const wasLiked = post.likes_count.includes(userId);
+                // store previous liked-state for potential rollback
+                state.pendingLikeMap[postId] = wasLiked;
+
+                if (wasLiked) {
+                    post.likes_count = post.likes_count.filter((id) => id !== userId);
+
+                } else {
+                    if (!post.likes_count.includes(userId)) {
+                        post.likes_count.push(userId);
+                    }
+                }
+            })
+            .addCase(toggleLike.fulfilled, (state, action) => {
+                const { postId, message } = action.payload as { postId: string, message: string };
+                const post = state.posts.find((p) => p._id === postId);
+                if(!post) {
+                    // clear any stale pending entry
+                    delete state.pendingLikeMap[postId];
+                    return;
+                }
+
+                const metaUserId = (action.meta?.arg as ToggleLikePayload | undefined)?.userId;
+                if (!metaUserId) {
+                    // no userId available — just clear pending map entry and return
+                    delete state.pendingLikeMap[postId];
+                    return;
+                }
+
+                toast.success(message); 
+
+                if (message === "Post liked") {
+                    if (!post.likes_count.includes(metaUserId)) {
+                        post.likes_count.push(metaUserId);
+                    }
+
+                } else if (message === "Post unliked") {
+                    post.likes_count = post.likes_count.filter((id) => id !== metaUserId);
+                }
+
+                // clear pending marker
+                delete state.pendingLikeMap[postId];
+            })
+            .addCase(toggleLike.rejected, (state, action) => {
+                const { postId, userId } = action.meta.arg as ToggleLikePayload;
+                const post = state.posts.find((p) => p._id === postId);
+                // read previous liked-state, if present
+                const previousLiked = state.pendingLikeMap[postId];
+
+                if (post) {
+                    if (typeof previousLiked === "boolean") {
+                        // revert to previous state
+                        if (previousLiked) {
+                            // if previously liked, ensure userId exists
+                            if (!post.likes_count.includes(userId)) post.likes_count.push(userId);
+                        } else {
+                            // if previously not liked, ensure userId is absent
+                            post.likes_count = post.likes_count.filter((id) => id !== userId);
+                        }
+                    } else {
+                        // no previous state recorded; as a fallback, toggle back
+                        const currentlyLiked = post.likes_count.includes(userId);
+                        if (currentlyLiked) {
+                            post.likes_count = post.likes_count.filter((id) => id !== userId);
+                        } else {
+                            post.likes_count.push(userId);
+                        }
+                    }
+                }
+                
+                // cleanup
+                delete state.pendingLikeMap[postId];
+
+                // surface error to user
+                toast.error(typeof action.payload === "string" ? action.payload : "Failed to toggle like");
+            });
     }
 });
 
