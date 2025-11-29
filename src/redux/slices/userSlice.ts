@@ -35,12 +35,6 @@ interface UserState {
     profilePosts: Post[];
 }
 
-const initialState: UserState = {
-    value: null,
-    loading: false,
-    profileData: null,
-    profilePosts: []
-}
 
 interface UpdateUserPayload {
     userData: FormData;
@@ -50,6 +44,18 @@ interface UpdateUserPayload {
 interface GetUserProfilesPayload {
     profileId: string;
     token: string | null;
+}
+
+interface FollowPayload {
+    targetUserId: string;
+    token: string | null;
+}
+
+const initialState: UserState = {
+    value: null,
+    loading: false,
+    profileData: null,
+    profilePosts: []
 }
 
 export const fetchUser = createAsyncThunk("user/getUser", async (token: string, { rejectWithValue }) => {
@@ -117,6 +123,44 @@ export const getUserProfiles = createAsyncThunk("user/getUserProfiles", async ({
     }
 });
 
+export const followUser = createAsyncThunk("user/follow", async ({ targetUserId, token }: FollowPayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/user/followUser", { targetUserId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to follow user");
+            return rejectWithValue(data.message || "Failed to follow user");
+        }
+
+        return { targetUserId, message: data.message };
+
+    } catch (error) {
+        toast.error("Failed to follow user");
+        return rejectWithValue("Failed to follow user");
+    }
+});
+
+export const unfollowUser = createAsyncThunk("user/unfollow", async ({ targetUserId, token }: FollowPayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/user/unfollowUser", { targetUserId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to unfollow user");
+            return rejectWithValue(data.message || "Failed to unfollow user");
+        }
+
+        return { targetUserId, message: data.message };
+
+    } catch (error) {
+        toast.error("Failed to unfollow user");
+        return rejectWithValue("Failed to unfollow user");
+    }
+});
+
 const userSlice = createSlice({
     name: "user",
     initialState,
@@ -153,7 +197,92 @@ const userSlice = createSlice({
             })
             .addCase(getUserProfiles.rejected, (state) => {
                 state.loading = false;
-            });
+            })
+            .addCase(followUser.pending, (state, action) => {
+                const targetUserId = action.meta.arg.targetUserId;
+                const currentUserId = state.value?._id;
+
+                if (!state.value || !currentUserId) return;
+
+                // OPTIMISTIC UPDATE
+                if (!state.value.following?.includes(targetUserId)) {
+                    state.value.following?.push(targetUserId);
+                }
+
+                // Update profile page followers (if we are viewing THAT profile)
+                if (state.profileData && state.profileData._id === targetUserId) {
+                    if (!state.profileData.followers?.includes(currentUserId)) {
+                        state.profileData.followers?.push(currentUserId);
+                    }
+                }
+
+                state.loading = true;
+            })
+            .addCase(followUser.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(followUser.rejected, (state, action) => {
+                const targetUserId = action.meta.arg.targetUserId;
+                const currentUserId = state.value?._id;
+
+                if (!state.value || !currentUserId) return;
+
+                // ROLLBACK optimistic update
+                state.value.following = state.value.following?.filter(id => id !== targetUserId);
+
+                if (state.profileData && state.profileData._id === targetUserId) {
+                    state.profileData.followers = state.profileData.followers?.filter(id => id !== currentUserId);
+                }
+
+                state.loading = false;
+                toast.error(action.payload as string || "Failed to follow user");
+            })
+            .addCase(unfollowUser.pending, (state, action) => {
+                const targetUserId = action.meta.arg.targetUserId;
+                const currentUserId = state.value?._id;
+
+                if (!state.value || !currentUserId) return;
+
+                // OPTIMISTIC UPDATE (remove user from following list)
+                if (state.value.following?.includes(targetUserId)) {
+                    state.value.following = state.value.following.filter((id) => id !== targetUserId);
+                }
+
+                // Update profile page followers (if we are viewing THAT profile)
+                if (state.profileData && state.profileData._id === targetUserId) {
+                    if (state.profileData.followers?.includes(currentUserId)) {
+                        state.profileData.followers = state.profileData.followers.filter((id) => id !== currentUserId);
+                    }
+                }
+                
+                state.loading = true;
+            })
+            .addCase(unfollowUser.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(unfollowUser.rejected, (state, action) => {
+                const targetUserId = action.meta.arg.targetUserId;
+                const currentUserId = state.value?._id;
+
+                if (!state.value || !currentUserId) return;
+
+                // ROLLBACK optimistic update - Re-add user to following
+                if (!state.value.following?.includes(targetUserId)) {
+                    state.value.following?.push(targetUserId);
+                }
+
+                // If viewing that profile, re-add follower
+                if (state.profileData && state.profileData._id === targetUserId) {
+                    if (!state.profileData.followers?.includes(currentUserId)) {
+                        state.profileData.followers?.push(currentUserId);
+                    } 
+                }
+
+                state.loading = false;
+                toast.error(action.payload as string || "Failed to unfollow user");
+            })
     }
 })
 
