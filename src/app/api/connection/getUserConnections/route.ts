@@ -16,11 +16,11 @@ export async function GET() {
         const followers = user.followers;
         const following = user.following;
 
-        const pendingConnecitons = (await connectionModel.find({
+        const pendingConnections = (await connectionModel.find({
             to_user_id: authUser._id, status: "pending"
         }).populate("from_user_id")).map((connection) => connection.from_user_id);
 
-        return NextResponse.json({ success: true, connections, followers, following, pendingConnecitons });
+        return NextResponse.json({ success: true, connections, followers, following, pendingConnections });
 
     } catch (error) {
         const errMesage = error instanceof Error ? error.message : "An unknown error occurred";

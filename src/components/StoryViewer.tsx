@@ -24,6 +24,7 @@ type StoriesType = {
   background_color: string
   createdAt?: Date;
   updatedAt?: Date;
+  view_count?: [];
 }
 
 type Props = {

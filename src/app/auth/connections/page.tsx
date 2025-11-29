@@ -1,18 +1,28 @@
 "use client"
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react'
-import {
-    assets,
-    dummyConnectionsData as connections,
-    dummyFollowersData as followers,
-    dummyFollowingData as following,
-    dummyPendingConnectionsData as pendingConnections
-} from '../../../../public/assets';
+import { useEffect, useState } from 'react'
+import { assets } from '../../../../public/assets';
 import { MessageSquare, UserCheck, UserPlus, UserRoundPen, Users } from 'lucide-react';
 import Image from 'next/image';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/redux/store';
+import { useAuth } from '@clerk/nextjs';
+import { fetchConnections } from '@/redux/slices/connectionSlice';
+import Loading from '@/components/Loading';
 
 const Connections = () => {
+
+    const {
+        connections,
+        followers,
+        following,
+        pendingConnections,
+        loading
+    } = useSelector((state: RootState) => state.connection);
+
+    const dispatch = useDispatch<AppDispatch>();
+    const { getToken } = useAuth();
 
     const [currentTab, setCurrentTab] = useState("Followers");
     const router = useRouter();
@@ -24,8 +34,13 @@ const Connections = () => {
         { label: "Connections", value: connections, icon: UserPlus },
     ];
 
-    console.log(dataArray);
+    useEffect(() => {
+        getToken().then((token) => {
+            dispatch(fetchConnections(token));
+        });
+    }, []);
 
+    if (loading) return <Loading />
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -44,7 +59,7 @@ const Connections = () => {
                             className="flex flex-col items-center justify-center gap-1 border
                              h-20 w-40 border-gray-200 bg-white shadow rounded-md"
                         >
-                            <b>{item.value.length}</b>
+                            <b>{item.value?.length}</b>
                             <p className="text-slate-600">{item.label}</p>
                         </div>
                     ))}
@@ -68,7 +83,7 @@ const Connections = () => {
                             <tab.icon className="w-4 h-4" />
                             <span className="ml-1">{tab.label}</span>
 
-                            {tab.value.length !== undefined && (
+                            {tab.value?.length !== undefined && (
                                 <span
                                     className="ml-2 text-xs bg-gray-100 text-gray-700 px-2
                                         py-0.5 rounded-full"
@@ -97,8 +112,8 @@ const Connections = () => {
 
                             <div className="flex-1">
                                 <p className="font-medium text-slate-700">{user.full_name}</p>
-                                <p className="text-slate-500">@{user.username}</p>
-                                <p className="text-sm text-slate-600">{user.bio.slice(0, 30)}...</p>
+                                <p className="text-slate-500">@{user.user_name}</p>
+                                <p className="text-sm text-slate-600">{user.bio && user.bio.slice(0, 30)}...</p>
 
                                 <div className="flex max-sm:flex-col gap-2 mt-4">
                                     <button

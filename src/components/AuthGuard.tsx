@@ -7,6 +7,7 @@ import Loading from "./Loading";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchUser } from "@/redux/slices/userSlice";
+import { fetchConnections } from "@/redux/slices/connectionSlice";
 
 
 export default function AuthGuard({ children } : { children: React.ReactNode }) {
@@ -23,7 +24,10 @@ export default function AuthGuard({ children } : { children: React.ReactNode }) 
 
         if (isLoaded && user && !userState) {
             getToken().then((token: string | null) => {
-                if (token) dispatch(fetchUser(token));
+                if (token) {
+                    dispatch(fetchUser(token));
+                    dispatch(fetchConnections(token));
+                } 
             });
         }
 
