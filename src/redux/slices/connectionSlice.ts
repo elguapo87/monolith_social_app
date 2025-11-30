@@ -24,7 +24,7 @@ export interface ConnectionState {
     loading: boolean;
 }
 
-interface SendConnectionPayload {
+interface ConnectionPayload {
     id: string;
     token: string | null;
 }
@@ -61,7 +61,7 @@ export const fetchConnections = createAsyncThunk("connection/getConnections", as
     }
 });
 
-export const sendConnection = createAsyncThunk("connection/sendConnection", async ({ id, token }: SendConnectionPayload, { rejectWithValue }) => {
+export const sendConnection = createAsyncThunk("connection/sendConnection", async ({ id, token }: ConnectionPayload, { rejectWithValue }) => {
     try {
         const { data } = await api.post("/connection/sendConnection", { id }, {
             headers: { Authorization: `Bearer ${token}` }
@@ -77,6 +77,44 @@ export const sendConnection = createAsyncThunk("connection/sendConnection", asyn
     } catch (error) {
         toast.error("Failed to send connection request");;
         return rejectWithValue("Failed to send connection request");
+    }
+});
+
+export const acceptConnectionRequest = createAsyncThunk("connection/acceptConnectionRequest", async ({ id, token }: ConnectionPayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/connection/acceptConnectionRequest", { id }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to accept connection request");;
+            return rejectWithValue(data.message);
+        }
+
+        return { id, message: data.message };
+
+    } catch (error) {
+        toast.error("Failed to accept connection request");;
+        return rejectWithValue("Failed to accept connection request");
+    }
+});
+
+export const declineConnectionRequest = createAsyncThunk("connection/DeclineConnectionRequest", async({ id, token }: ConnectionPayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/connection/declineConnectionRequest", { id }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to decline connection request");;
+            return rejectWithValue(data.message);
+        }
+
+        return { id, message: data.message };
+
+    } catch (error) {
+        toast.error("Failed to decline connection request");;
+        return rejectWithValue("Failed to decline connection request");
     }
 });
 
@@ -124,6 +162,56 @@ const connectionSlice = createSlice({
                 state.loading = false;
 
                 toast.error((action.payload as string) || "Failed to send connection request");
+            })
+            .addCase(acceptConnectionRequest.pending, (state, action) => {
+                const targetUserId = action.meta.arg.id;
+
+                state.pendingConnections = state.pendingConnections.filter((u) => u._id !== targetUserId);
+
+                const alreadyConnected = state.connections.some((u) => u._id === targetUserId);
+                if (!alreadyConnected) {
+                    state.connections.push({ _id: targetUserId } as IUser);
+                }
+
+                state.loading = true;
+            })
+            .addCase(acceptConnectionRequest.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(acceptConnectionRequest.rejected, (state, action) => {
+                const targetUserId = action.meta.arg.id;
+
+                // Rollback optimistic update
+                state.connections = state.connections.filter((u) => u._id !== targetUserId);
+
+                // Re-add to pendingConnections
+                state.pendingConnections.push({ _id: targetUserId } as IUser);
+
+                state.loading = false;
+
+                toast.error((action.payload as string) || "Failed to accept connection request");
+            })
+            .addCase(declineConnectionRequest.pending, (state, action) => {
+                const targetUserId = action.meta.arg.id;
+                
+                // Optimistic: remove the pending request immediately
+                state.pendingConnections = state.pendingConnections.filter((u) => u._id !== targetUserId);
+                
+                state.loading = true
+            })
+            .addCase(declineConnectionRequest.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(declineConnectionRequest.rejected, (state, action) => {
+                const targetUserId = action.meta.arg.id;
+
+                // Rollback: re-add the pending connection
+                state.pendingConnections.push({ _id: targetUserId } as IUser);
+
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to decline connection request");
             })
     }
 })
