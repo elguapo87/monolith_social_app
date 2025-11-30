@@ -24,6 +24,11 @@ export interface ConnectionState {
     loading: boolean;
 }
 
+interface SendConnectionPayload {
+    id: string;
+    token: string | null;
+}
+
 const initialState: ConnectionState = {
     connections: [],
     followers: [],
@@ -32,7 +37,7 @@ const initialState: ConnectionState = {
     loading: false
 }
 
-export const fetchConnections = createAsyncThunk("connection/getConnecitons", async (token: string | null, { rejectWithValue }) => {
+export const fetchConnections = createAsyncThunk("connection/getConnections", async (token: string | null, { rejectWithValue }) => {
     try {
         const { data } = await api.get("/connection/getUserConnections", {
             headers: { Authorization: `Bearer ${token}` }
@@ -56,6 +61,25 @@ export const fetchConnections = createAsyncThunk("connection/getConnecitons", as
     }
 });
 
+export const sendConnection = createAsyncThunk("connection/sendConnection", async ({ id, token }: SendConnectionPayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/connection/sendConnection", { id }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to send connection request");;
+            return rejectWithValue(data.message);
+        }
+
+        return { id, message: data.message };
+
+    } catch (error) {
+        toast.error("Failed to send connection request");;
+        return rejectWithValue("Failed to send connection request");
+    }
+});
+
 const connectionSlice = createSlice({
     name: "connection",
     initialState,
@@ -74,6 +98,32 @@ const connectionSlice = createSlice({
             })
             .addCase(fetchConnections.rejected, (state) => {
                 state.loading = false;
+            })
+            .addCase(sendConnection.pending, (state, action) => {
+                const targetUserId = action.meta.arg.id;
+
+                // Avoid duplicates in case user spam-clicks
+                const alreadyPending = state.pendingConnections.some((u) => u._id === targetUserId);
+                if (!alreadyPending) {
+                    // Optimistic: add target user as pending
+                    state.pendingConnections.push({ _id: targetUserId } as IUser);
+                }
+
+                state.loading = true;
+            })
+            .addCase(sendConnection.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(sendConnection.rejected, (state, action) => {
+                const targetUserId = action.meta.arg.id;
+
+                // Rollback optimistic update
+                state.pendingConnections = state.pendingConnections.filter((u) => u._id !== targetUserId);
+
+                state.loading = false;
+
+                toast.error((action.payload as string) || "Failed to send connection request");
             })
     }
 })
