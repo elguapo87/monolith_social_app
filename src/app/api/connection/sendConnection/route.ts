@@ -41,11 +41,11 @@ export async function POST(req: Request) {
                 to_user_id: id,
             });
 
-            await sendAppEvent("app/connection-request", {
-                data: { connectionId: newConnection._id }
-            });
+            // await sendAppEvent("app/connection-request", {
+            //     data: { connectionId: newConnection._id }
+            // });
 
-            return NextResponse.json({ success: true, message: "Connection request sent successfully" });
+            return NextResponse.json({ success: true, message: "Connection request sent" });
 
         } else if (connection && connection.status === "accepted") {
             return NextResponse.json({ success: false, message: "You already connected with this user" });

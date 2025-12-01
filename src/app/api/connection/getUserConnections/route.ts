@@ -20,7 +20,19 @@ export async function GET() {
             to_user_id: authUser._id, status: "pending"
         }).populate("from_user_id")).map((connection) => connection.from_user_id);
 
-        return NextResponse.json({ success: true, connections, followers, following, pendingConnections });
+        const pendingSent = (await connectionModel.find({
+            from_user_id: authUser._id,
+            status: "pending"
+        }).populate("to_user_id")).map((connection) => connection.to_user_id);
+
+        return NextResponse.json({ 
+            success: true,
+            connections,
+            followers, 
+            following, 
+            pendingConnections,  // incoming 
+            pendingSent  // outgoing 
+        });
 
     } catch (error) {
         const errMesage = error instanceof Error ? error.message : "An unknown error occurred";

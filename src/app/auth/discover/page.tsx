@@ -1,27 +1,53 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { dummyConnectionsData } from "../../../../public/assets";
 import { Search } from "lucide-react";
 import UserCard from "@/components/UserCard";
 import Loading from "@/components/Loading";
+import api from "@/lib/axios";
+import { useAuth } from "@clerk/nextjs";
 
 const Discover = () => {
+
+  const { getToken } = useAuth();
 
   const [input, setInput] = useState("");
   const [users, setUsers] = useState(dummyConnectionsData);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  useEffect(() => {
+    // If input is empty, clear results and stop
+    if (input.trim() === "") {
       setUsers([]);
-      setLoading(true);
-      setTimeout(() => {
-        setUsers(dummyConnectionsData);
-        setLoading(false);
-      }, 1000)
+      setLoading(false);
+      return;
     }
-  };
+
+    const delayDebounce = setTimeout(async () => {
+      setLoading(true);
+
+      const token = await getToken();
+
+      try {
+        const { data } = await api.post("/user/discoverUsers", { input }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (data.success) {
+          setUsers(data.users);
+        } 
+
+      } catch (error) {
+        console.error("Search failed:", error);
+
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [input])
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
@@ -40,9 +66,8 @@ const Discover = () => {
               <input
                 onChange={(e) => setInput(e.target.value)}
                 value={input}
-                onKeyUp={handleSearch}
                 type="text"
-                placeholder="Search people by name, username, bio, or location..."  
+                placeholder="Search people by name, username, bio, or location..."
                 className="pl-10 sm:pl-12 py-2 w-full border border-gray-300 rounded-md max-sm:text-sm"
               />
             </div>

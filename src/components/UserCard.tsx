@@ -1,7 +1,11 @@
 import Image, { StaticImageData } from "next/image";
 import { MapPin, MessageCircle, Plus, UserPlus } from "lucide-react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { useAuth } from "@clerk/nextjs";
+import { followUser, unfollowUser } from "@/redux/slices/userSlice";
+import { fetchConnections, IUser, sendConnection } from "@/redux/slices/connectionSlice";
+import { useRouter } from "next/navigation";
 
 type UserProps = {
     user: {
@@ -26,14 +30,31 @@ type UserProps = {
 const UserCard = ({ user }: UserProps) => {
 
     const currentUser = useSelector((state: RootState) => state.user.value);
+    const { connections, pendingConnections, pendingSent } = useSelector((state: RootState) => state.connection);
+    const dispatch = useDispatch<AppDispatch>();
+    const { getToken } = useAuth();
 
-    const handleFollow = async () => {
+    const router = useRouter();
+  
+    const toggleFollow = async () => {
+        const token = await getToken();
+        const isFollowing = currentUser?.following?.includes(user._id);
 
+        if (isFollowing) {
+            dispatch(unfollowUser({ targetUserId: user._id, token }));
+        } else {
+            dispatch(followUser({ targetUserId: user._id, token }));
+        }
     };
 
     const handleConnectionRequest = async () => {
-
+        const token = await getToken();
+        dispatch(sendConnection({ id: user._id, token }));
     };
+
+    const isPendingSent = pendingSent.some((u) => u._id === user._id);
+    const isPendingReceived = pendingConnections.some((u) => u._id === user._id);
+    const isConnected = connections.some((u) => u._id === user._id);
 
     return (
         <div
@@ -67,8 +88,8 @@ const UserCard = ({ user }: UserProps) => {
             <div className="flex mt-4 gap-2">
                 {/* FOLLOW BUTTON */}
                 <button
-                    onClick={handleFollow}
-                    disabled={currentUser?.followers?.includes(user._id)}
+                    onClick={toggleFollow}
+                    // disabled={currentUser?.followers?.includes(user._id)}
                     className="w-full py-2 rounded-md flex justify-center items-center gap-2 bg-linear-to-r
                         from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700
                         active:scale-95 transition text-white cursor-pointer"
@@ -79,12 +100,28 @@ const UserCard = ({ user }: UserProps) => {
 
                 {/* CONNECTION REQUEST BUTTON / MESSAGE BUTTON */}
                 <button
-                    onClick={() => handleConnectionRequest}
-                    className="flex items-center justify-center w-16 border text-slate-500 group rounded-md
-                        cursor-pointer active:scale-95 transition"
+                    onClick={(e) => {
+                        if (isPendingSent || isPendingReceived || isConnected) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return;
+                        }
+                        handleConnectionRequest();
+                    }}
+                    disabled={isPendingSent || isPendingReceived || isConnected}
+                    className={`flex items-center justify-center w-16 border text-slate-500 group rounded-md
+                        cursor-pointer active:scale-95 transition ${isPendingSent || isPendingReceived ? 
+                        "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                    {currentUser?.connections?.includes(user._id) ? (
-                        <MessageCircle className="w-5 h-5 group-hover:scale-105 transition" />
+                    {isConnected ? (
+                        <MessageCircle 
+                            onClick={(e) => { e.stopPropagation(); router.push(`/auth/chatBox/${user._id}`); }}
+                            className="w-5 h-5 group-hover:scale-105 transition"
+                        />
+                    ) : isPendingSent ? (
+                        <span className="text-xs font-medium text-gray-500">Pending</span>
+                    ) : isPendingReceived ? (
+                        <span className="text-xs font-medium text-gray-500">Requested</span>
                     ) : (
                         <Plus className="w-5 h-5 group-hover:scale-105 transition" />
                     )}

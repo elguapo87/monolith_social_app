@@ -10,7 +10,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { id: targetUserId } = body;
+        const { targetUserId } = body;
 
         if (authUser._id.toString() === targetUserId) {
             return NextResponse.json({ success: false, message: "You cannot follow yourself" }, { status: 400 });

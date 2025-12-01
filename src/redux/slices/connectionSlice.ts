@@ -21,6 +21,7 @@ export interface ConnectionState {
     followers: IUser[];
     following: IUser[];
     pendingConnections: IUser[];
+    pendingSent: IUser[];
     loading: boolean;
 }
 
@@ -34,6 +35,7 @@ const initialState: ConnectionState = {
     followers: [],
     following: [],
     pendingConnections: [],
+    pendingSent: [],
     loading: false
 }
 
@@ -52,7 +54,8 @@ export const fetchConnections = createAsyncThunk("connection/getConnections", as
             connections: data.connections,
             followers: data.followers,
             following: data.following,
-            pendingConnections: data.pendingConnections
+            pendingConnections: data.pendingConnections,
+            pendingSent: data.pendingSent
         }
 
     } catch (error) {
@@ -133,6 +136,7 @@ const connectionSlice = createSlice({
                 state.followers = action.payload.followers;
                 state.following = action.payload.following;
                 state.pendingConnections = action.payload.pendingConnections;
+                state.pendingSent = action.payload.pendingSent;
             })
             .addCase(fetchConnections.rejected, (state) => {
                 state.loading = false;
@@ -141,10 +145,10 @@ const connectionSlice = createSlice({
                 const targetUserId = action.meta.arg.id;
 
                 // Avoid duplicates in case user spam-clicks
-                const alreadyPending = state.pendingConnections.some((u) => u._id === targetUserId);
+                const alreadyPending = state.pendingSent.some((u) => u._id === targetUserId);
                 if (!alreadyPending) {
                     // Optimistic: add target user as pending
-                    state.pendingConnections.push({ _id: targetUserId } as IUser);
+                    state.pendingSent.push({ _id: targetUserId } as IUser);
                 }
 
                 state.loading = true;
@@ -157,7 +161,7 @@ const connectionSlice = createSlice({
                 const targetUserId = action.meta.arg.id;
 
                 // Rollback optimistic update
-                state.pendingConnections = state.pendingConnections.filter((u) => u._id !== targetUserId);
+                state.pendingSent = state.pendingSent.filter((u) => u._id !== targetUserId);
 
                 state.loading = false;
 

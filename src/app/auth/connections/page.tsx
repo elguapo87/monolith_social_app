@@ -18,7 +18,8 @@ const Connections = () => {
         followers,
         following,
         pendingConnections,
-        loading
+        pendingSent,
+        loading,
     } = useSelector((state: RootState) => state.connection);
 
     const dispatch = useDispatch<AppDispatch>();
@@ -30,7 +31,7 @@ const Connections = () => {
     const dataArray = [
         { label: "Followers", value: followers, icon: Users },
         { label: "Following", value: following, icon: UserCheck },
-        { label: "Pending", value: pendingConnections, icon: UserRoundPen },
+        { label: "Pending", value: pendingSent, icon: UserRoundPen },
         { label: "Connections", value: connections, icon: UserPlus },
     ];
 
