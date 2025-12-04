@@ -1,10 +1,10 @@
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import { MapPin, MessageCircle, Plus, UserPlus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
 import { followUser, unfollowUser } from "@/redux/slices/userSlice";
-import { fetchConnections, IUser, sendConnection } from "@/redux/slices/connectionSlice";
+import { cancelConnectionRequest, fetchConnections, sendConnection } from "@/redux/slices/connectionSlice";
 import { useRouter } from "next/navigation";
 
 type UserProps = {
@@ -12,10 +12,10 @@ type UserProps = {
         _id: string;
         email: string;
         full_name: string;
-        username: string;
+        user_name: string;
         bio: string;
-        profile_picture: StaticImageData | string;
-        cover_photo: StaticImageData | string;
+        profile_picture: string;
+        cover_photo: string;
         location: string;
         followers: string[];
         following: string[];
@@ -49,12 +49,27 @@ const UserCard = ({ user }: UserProps) => {
 
     const handleConnectionRequest = async () => {
         const token = await getToken();
-        dispatch(sendConnection({ id: user._id, token }));
+        await dispatch(sendConnection({ id: user._id, token }));
+        dispatch(fetchConnections(token));
     };
 
-    const isPendingSent = pendingSent.some((u) => u._id === user._id);
-    const isPendingReceived = pendingConnections.some((u) => u._id === user._id);
+    const isPendingSent = pendingSent.some((u) => u.to_user_id._id === user._id);
+    const isPendingReceived = pendingConnections.some((u) => u.from_user_id._id === user._id);
     const isConnected = connections.some((u) => u._id === user._id);
+
+    const connectionSent = pendingSent.find((u) => u.to_user_id._id === user._id);
+    const connectionId = connectionSent?._id;
+
+    const handleCancelRequest = async () => {
+        if (!connectionId) return;
+
+        const token = await getToken();
+        
+        await dispatch(cancelConnectionRequest({ connectionId, token }));
+        dispatch(fetchConnections(token));
+    };
+
+    // console.log(pendingSent);
 
     return (
         <div
@@ -71,7 +86,7 @@ const UserCard = ({ user }: UserProps) => {
                 />
 
                 <p className="mt-4 font-semibold">{user.full_name}</p>
-                {user.username && <p className="text-gray-600 font-light">@{user.username}</p>}
+                {user.user_name && <p className="text-gray-600 font-light">@{user.user_name}</p>}
                 {user.bio && <p className="text-gray-600 mt-2 text-center text-sm px-4">@{user.bio}</p>}
             </div>
 
@@ -126,6 +141,17 @@ const UserCard = ({ user }: UserProps) => {
                         <Plus className="w-5 h-5 group-hover:scale-105 transition" />
                     )}
                 </button>
+
+                {isPendingSent && (
+                    <button
+                    onClick={handleCancelRequest}
+                    className="py-2 px-2 rounded-md flex justify-center items-center bg-linear-to-r
+                        from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700
+                        active:scale-95 transition text-white cursor-pointer"
+                >
+                    Cancel
+                </button>
+                )}
             </div>
         </div>
     )

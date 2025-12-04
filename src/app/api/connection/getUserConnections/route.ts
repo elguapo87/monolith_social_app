@@ -16,14 +16,17 @@ export async function GET() {
         const followers = user.followers;
         const following = user.following;
 
-        const pendingConnections = (await connectionModel.find({
-            to_user_id: authUser._id, status: "pending"
-        }).populate("from_user_id")).map((connection) => connection.from_user_id);
+        // INCOMING
+        const pendingConnections = await connectionModel.find({
+            to_user_id: authUser._id,
+            status: "pending"
+        }).populate("from_user_id");
 
-        const pendingSent = (await connectionModel.find({
+        // OUTGOING
+        const pendingSent = await connectionModel.find({
             from_user_id: authUser._id,
             status: "pending"
-        }).populate("to_user_id")).map((connection) => connection.to_user_id);
+        }).populate("to_user_id");
 
         return NextResponse.json({ 
             success: true,
@@ -31,7 +34,7 @@ export async function GET() {
             followers, 
             following, 
             pendingConnections,  // incoming 
-            pendingSent  // outgoing 
+            pendingSent,  // outgoing 
         });
 
     } catch (error) {

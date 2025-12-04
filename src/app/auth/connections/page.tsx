@@ -8,11 +8,10 @@ import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
 import { useAuth } from '@clerk/nextjs';
-import { fetchConnections } from '@/redux/slices/connectionSlice';
+import { fetchConnections, IUser, PendingData } from '@/redux/slices/connectionSlice';
 import Loading from '@/components/Loading';
 
 const Connections = () => {
-
     const {
         connections,
         followers,
@@ -32,6 +31,7 @@ const Connections = () => {
         { label: "Followers", value: followers, icon: Users },
         { label: "Following", value: following, icon: UserCheck },
         { label: "Pending", value: pendingSent, icon: UserRoundPen },
+        { label: "Incoming", value: pendingConnections, icon: UserRoundPen },
         { label: "Connections", value: connections, icon: UserPlus },
     ];
 
@@ -40,6 +40,37 @@ const Connections = () => {
             dispatch(fetchConnections(token));
         });
     }, []);
+
+    const toFullUser = (u: IUser | { _id: string }): IUser => {
+        if ("full_name" in u && "email" in u) {
+            return u; // Already a full IUser
+        }
+
+        // Convert minimal object → safe IUser shape
+        return {
+            _id: u._id,
+            full_name: "Unknown User",
+            email: "unknown@example.com",
+            user_name: "unknown",
+            bio: "",
+            profile_picture: "",
+            followers: [],
+            following: [],
+            connections: []
+        };
+    };
+
+    const normalizeUser = (item: IUser | PendingData, tab: string): IUser => {
+        if (tab === "Pending") {
+            return toFullUser((item as PendingData).to_user_id);
+        }
+
+        if (tab === "Incoming") {
+            return toFullUser((item as PendingData).from_user_id);
+        }
+
+        return toFullUser(item as IUser);
+    }
 
     if (loading) return <Loading />
 
@@ -98,70 +129,85 @@ const Connections = () => {
 
                 {/* CONNECTIONS */}
                 <div className="flex flex-wrap gap-6 mt-6">
-                    {dataArray.find((item) => item.label === currentTab)?.value.map((user) => (
-                        <div
-                            key={user._id}
-                            className="w-full max-w-88 flex gap-5 p-6 bg-white shadow rounded-md"
-                        >
-                            <Image
-                                src={user.profile_picture || assets.avatar_icon}
-                                alt=''
-                                width={48}
-                                height={48}
-                                className="rounded-full size-12 shadow-md mx-auto"
-                            />
+                    {dataArray.find((item) => item.label === currentTab)?.value.map((row) => {
+                        const user = normalizeUser(row, currentTab);
 
-                            <div className="flex-1">
-                                <p className="font-medium text-slate-700">{user.full_name}</p>
-                                <p className="text-slate-500">@{user.user_name}</p>
-                                <p className="text-sm text-slate-600">{user.bio && user.bio.slice(0, 30)}...</p>
+                        return (
+                            <div
+                                key={user?._id}
+                                className="w-full max-w-88 flex gap-5 p-6 bg-white shadow rounded-md"
+                            >
+                                <Image
+                                    src={user?.profile_picture || assets.avatar_icon}
+                                    alt=''
+                                    width={48}
+                                    height={48}
+                                    className="rounded-full size-12 shadow-md mx-auto"
+                                />
 
-                                <div className="flex max-sm:flex-col gap-2 mt-4">
-                                    <button
-                                        onClick={() => router.push(`/auth/profile/${user._id}`)}
-                                        className="w-full p-2 text-sm rounded bg-linear-to-r
+                                <div className="flex-1">
+                                    <p className="font-medium text-slate-700">{user?.full_name}</p>
+                                    <p className="text-slate-500">@{user?.user_name}</p>
+                                    <p className="text-sm text-slate-600">{user?.bio && user.bio.slice(0, 30)}...</p>
+
+                                    <div className="flex max-sm:flex-col gap-2 mt-4">
+                                        <button
+                                            onClick={() => router.push(`/auth/profile/${user?._id}`)}
+                                            className="w-full p-2 text-sm rounded bg-linear-to-r
                                          from-indigo-500 to-purple-600 hover:from-indigo-600
                                           hover:to-purple-700 active:scale-95 transition
                                            text-white cursor-pointer"
-                                    >
-                                        Profile
-                                    </button>
+                                        >
+                                            Profile
+                                        </button>
 
-                                    {currentTab === "Following" && (
-                                        <button
-                                            className="w-full p-2 text-sm rounded bg-slate-100
+                                        {currentTab === "Following" && (
+                                            <button
+                                                className="w-full p-2 text-sm rounded bg-slate-100
                                              hover:bg-slate-200 text-black active:scale-95
                                               transition cursor-pointer"
-                                        >
-                                            Unfollow
-                                        </button>
-                                    )}
+                                            >
+                                                Unfollow
+                                            </button>
+                                        )}
 
-                                    {currentTab === "Pending" && (
-                                        <button
-                                            className="w-full p-2 text-sm rounded bg-slate-100
+                                        {currentTab === "Pending" && (
+                                            <button
+                                                className="w-full p-2 text-sm rounded bg-slate-100
                                              hover:bg-slate-200 text-black active:scale-95
                                               transition cursor-pointer"
-                                        >
-                                            Accept
-                                        </button>
-                                    )}
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
 
-                                    {currentTab === "Connections" && (
-                                        <button
-                                            onClick={() => router.push(`/auth/chatBox/${user._id}`)}
-                                            className="w-full p-2 text-sm rounded bg-slate-100
+                                        {currentTab === "Incoming" && (
+                                            <button
+                                                className="w-full p-2 text-sm rounded bg-slate-100
+                                             hover:bg-slate-200 text-black active:scale-95
+                                              transition cursor-pointer"
+                                            >
+                                                Accept
+                                            </button>
+                                        )}
+
+
+                                        {currentTab === "Connections" && (
+                                            <button
+                                                onClick={() => router.push(`/auth/chatBox/${user?._id}`)}
+                                                className="w-full p-2 text-sm rounded bg-slate-100
                                              hover:bg-slate-200 text-black active:scale-95
                                               transition cursor-pointer flex items-center justify-center gap-1"
-                                        >
-                                            <MessageSquare className="w-4 h-4" />
-                                            Message
-                                        </button>
-                                    )}
+                                            >
+                                                <MessageSquare className="w-4 h-4" />
+                                                Message
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </div>
@@ -169,3 +215,6 @@ const Connections = () => {
 }
 
 export default Connections
+
+
+

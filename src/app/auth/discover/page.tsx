@@ -8,12 +8,31 @@ import Loading from "@/components/Loading";
 import api from "@/lib/axios";
 import { useAuth } from "@clerk/nextjs";
 
+type UserData = {
+  _id: string;
+  email: string;
+  full_name: string;
+  user_name: string;
+  bio: string;
+  profile_picture: string;
+  cover_photo: string;
+  location: string;
+  followers: string[];
+  following: string[];
+  connections: string[];
+  posts: never[];
+  is_verified: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+};
+
 const Discover = () => {
 
   const { getToken } = useAuth();
 
   const [input, setInput] = useState("");
-  const [users, setUsers] = useState(dummyConnectionsData);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,7 +55,7 @@ const Discover = () => {
 
         if (data.success) {
           setUsers(data.users);
-        } 
+        }
 
       } catch (error) {
         console.error("Search failed:", error);

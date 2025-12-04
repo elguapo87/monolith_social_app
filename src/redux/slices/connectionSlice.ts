@@ -16,12 +16,21 @@ export interface IUser {
     connections?: string[];
 }
 
+export interface PendingData {
+    _id: string;
+    from_user_id: IUser | { _id: string };
+    to_user_id: IUser | { _id: string };
+    status: string;
+    updatedAt?: Date;
+    createdAt?: Date;
+}
+
 export interface ConnectionState {
     connections: IUser[];
     followers: IUser[];
     following: IUser[];
-    pendingConnections: IUser[];
-    pendingSent: IUser[];
+    pendingConnections: PendingData[]
+    pendingSent: PendingData[];
     loading: boolean;
 }
 
@@ -102,7 +111,7 @@ export const acceptConnectionRequest = createAsyncThunk("connection/acceptConnec
     }
 });
 
-export const declineConnectionRequest = createAsyncThunk("connection/DeclineConnectionRequest", async({ id, token }: ConnectionPayload, { rejectWithValue }) => {
+export const declineConnectionRequest = createAsyncThunk("connection/DeclineConnectionRequest", async ({ id, token }: ConnectionPayload, { rejectWithValue }) => {
     try {
         const { data } = await api.post("/connection/declineConnectionRequest", { id }, {
             headers: { Authorization: `Bearer ${token}` }
@@ -118,6 +127,25 @@ export const declineConnectionRequest = createAsyncThunk("connection/DeclineConn
     } catch (error) {
         toast.error("Failed to decline connection request");;
         return rejectWithValue("Failed to decline connection request");
+    }
+});
+
+export const cancelConnectionRequest = createAsyncThunk("connection/cancelConnectionRequest", async ({ connectionId, token }: { connectionId: string, token: string | null }, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/connection/cancelRequest", { connectionId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to cancel connection request");;
+            return rejectWithValue(data.message);
+        }
+
+        return { connectionId, message: data.message };
+
+    } catch (error) {
+        toast.error("Failed to cancel connection request");;
+        return rejectWithValue("Failed to cancel connection request");
     }
 });
 
@@ -141,16 +169,7 @@ const connectionSlice = createSlice({
             .addCase(fetchConnections.rejected, (state) => {
                 state.loading = false;
             })
-            .addCase(sendConnection.pending, (state, action) => {
-                const targetUserId = action.meta.arg.id;
-
-                // Avoid duplicates in case user spam-clicks
-                const alreadyPending = state.pendingSent.some((u) => u._id === targetUserId);
-                if (!alreadyPending) {
-                    // Optimistic: add target user as pending
-                    state.pendingSent.push({ _id: targetUserId } as IUser);
-                }
-
+            .addCase(sendConnection.pending, (state) => {
                 state.loading = true;
             })
             .addCase(sendConnection.fulfilled, (state, action) => {
@@ -158,25 +177,10 @@ const connectionSlice = createSlice({
                 toast.success(action.payload.message);
             })
             .addCase(sendConnection.rejected, (state, action) => {
-                const targetUserId = action.meta.arg.id;
-
-                // Rollback optimistic update
-                state.pendingSent = state.pendingSent.filter((u) => u._id !== targetUserId);
-
                 state.loading = false;
-
                 toast.error((action.payload as string) || "Failed to send connection request");
             })
-            .addCase(acceptConnectionRequest.pending, (state, action) => {
-                const targetUserId = action.meta.arg.id;
-
-                state.pendingConnections = state.pendingConnections.filter((u) => u._id !== targetUserId);
-
-                const alreadyConnected = state.connections.some((u) => u._id === targetUserId);
-                if (!alreadyConnected) {
-                    state.connections.push({ _id: targetUserId } as IUser);
-                }
-
+            .addCase(acceptConnectionRequest.pending, (state) => {
                 state.loading = true;
             })
             .addCase(acceptConnectionRequest.fulfilled, (state, action) => {
@@ -184,24 +188,10 @@ const connectionSlice = createSlice({
                 toast.success(action.payload.message);
             })
             .addCase(acceptConnectionRequest.rejected, (state, action) => {
-                const targetUserId = action.meta.arg.id;
-
-                // Rollback optimistic update
-                state.connections = state.connections.filter((u) => u._id !== targetUserId);
-
-                // Re-add to pendingConnections
-                state.pendingConnections.push({ _id: targetUserId } as IUser);
-
                 state.loading = false;
-
                 toast.error((action.payload as string) || "Failed to accept connection request");
             })
-            .addCase(declineConnectionRequest.pending, (state, action) => {
-                const targetUserId = action.meta.arg.id;
-                
-                // Optimistic: remove the pending request immediately
-                state.pendingConnections = state.pendingConnections.filter((u) => u._id !== targetUserId);
-                
+            .addCase(declineConnectionRequest.pending, (state) => {
                 state.loading = true
             })
             .addCase(declineConnectionRequest.fulfilled, (state, action) => {
@@ -209,13 +199,19 @@ const connectionSlice = createSlice({
                 toast.success(action.payload.message);
             })
             .addCase(declineConnectionRequest.rejected, (state, action) => {
-                const targetUserId = action.meta.arg.id;
-
-                // Rollback: re-add the pending connection
-                state.pendingConnections.push({ _id: targetUserId } as IUser);
-
                 state.loading = false;
                 toast.error((action.payload as string) || "Failed to decline connection request");
+            })
+            .addCase(cancelConnectionRequest.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(cancelConnectionRequest.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(cancelConnectionRequest.rejected, (state, action) => {
+                state.loading = true;
+                toast.error((action.payload as string) || "Failed to cancel connection request");
             })
     }
 })
