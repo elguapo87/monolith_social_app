@@ -1,7 +1,7 @@
 import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
 import { NextResponse } from "next/server";
-import { sendAppEvent } from "@/inngest/client";
+import { sendInngestEvent } from "@/lib/inngestHttpSender";
 
 export async function POST(req: Request) {
     try {
@@ -9,10 +9,10 @@ export async function POST(req: Request) {
         if (!authorized || !user) {
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
-    
+
         const body = await req.json();
 
-        const { id } = body 
+        const { id } = body
 
         // Check if user has sent more then 20 connection requests in the last 24 hr 
         const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -21,12 +21,12 @@ export async function POST(req: Request) {
         });
 
         if (connecitonRequests.length >= 20) {
-            return NextResponse.json({ 
-                success: false, 
-                message: "You have sent more then 20 connection requests in the last 24 hours" 
+            return NextResponse.json({
+                success: false,
+                message: "You have sent more then 20 connection requests in the last 24 hours"
             });
         }
-        
+
         // Check of users are already connected
         const connection = await connectionModel.findOne({
             $or: [
@@ -41,11 +41,22 @@ export async function POST(req: Request) {
                 to_user_id: id,
             });
 
-            // await sendAppEvent("app/connection-request", {
-            //     data: { connectionId: newConnection._id }
-            // });
+            try {
+                await sendInngestEvent("app/connection-request", {
+                    data: { connectionId: newConnection._id.toString() }
+                });
+                
+            } catch (err) {
+                console.error("Failed to send inngest event:", err);
+                // do not fail the whole request just because the background event failed,
+                // but optionally surface to client
+                return NextResponse.json({
+                    success: false,
+                    message: "Connection saved but failed to notify background worker",
+                });
+            }
 
-            return NextResponse.json({ success: true, message: "Connection request sent" });
+            return NextResponse.json({ success: true, message: "Connection request sent", connection: newConnection });
 
         } else if (connection && connection.status === "accepted") {
             return NextResponse.json({ success: false, message: "You already connected with this user" });
