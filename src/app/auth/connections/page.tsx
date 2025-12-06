@@ -3,13 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react'
 import { assets } from '../../../../public/assets';
-import { MessageSquare, UserCheck, UserPlus, UserRoundPen, Users } from 'lucide-react';
+import { Check, CircleX, Eye, MessageSquare, Plus, UserCheck, UserPlus, UserRoundPen, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
 import { useAuth } from '@clerk/nextjs';
-import { fetchConnections, IUser, PendingData } from '@/redux/slices/connectionSlice';
+import { acceptConnectionRequest, cancelConnectionRequest, declineConnectionRequest, fetchConnections, IUser, PendingData, sendConnection } from '@/redux/slices/connectionSlice';
 import Loading from '@/components/Loading';
+import { followUser, unfollowUser } from '@/redux/slices/userSlice';
 
 const Connections = () => {
     const {
@@ -20,6 +21,8 @@ const Connections = () => {
         pendingSent,
         loading,
     } = useSelector((state: RootState) => state.connection);
+
+    const currentUser = useSelector((state: RootState) => state.user.value);
 
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
@@ -60,17 +63,67 @@ const Connections = () => {
         };
     };
 
-    const normalizeUser = (item: IUser | PendingData, tab: string): IUser => {
+    const normalizeUser = (item: IUser | PendingData, tab: string) => {
         if (tab === "Pending") {
-            return toFullUser((item as PendingData).to_user_id);
+            return {
+                user: toFullUser((item as PendingData).to_user_id),
+                connectionId: (item as PendingData)._id,
+                otherUserId: (item as PendingData).to_user_id._id
+            };
         }
 
         if (tab === "Incoming") {
-            return toFullUser((item as PendingData).from_user_id);
+            return {
+                user: toFullUser((item as PendingData).from_user_id),
+                connectionId: (item as PendingData)._id,
+                otherUserId: (item as PendingData).from_user_id._id
+            };
         }
 
-        return toFullUser(item as IUser);
+        // Followers, following, connections
+        return {
+            user: toFullUser(item as IUser),
+            connectionId: null,
+            otherUserId: (item as IUser)._id
+        }
     }
+
+    const handleFollow = async (targetUserId: string) => {
+        const token = await getToken();
+        await dispatch(followUser({ targetUserId, token }));
+        dispatch(fetchConnections(token));
+    };
+
+    const handleUnfollow = async (targetUserId: string) => {
+        const token = await getToken();
+        await dispatch(unfollowUser({ targetUserId, token }));
+        dispatch(fetchConnections(token));
+    };
+
+    const handleConnectionRequest = async (id: string) => {
+        const token = await getToken();
+        await dispatch(sendConnection({ id, token }));
+        dispatch(fetchConnections(token));
+    };
+
+    const handleCancelRequest = async (connectionId: string | null) => {
+        if (!connectionId) return;
+        const token = await getToken();
+        await dispatch(cancelConnectionRequest({ connectionId, token }));
+        dispatch(fetchConnections(token));
+    };
+
+    const handleAccept = async (id: string) => {
+        const token = await getToken();
+        await dispatch(acceptConnectionRequest({ id, token }));
+        dispatch(fetchConnections(token));
+    };
+    
+    const handleDecline = async (id: string) => {
+        const token = await getToken();
+        await dispatch(declineConnectionRequest({ id, token }));
+        dispatch(fetchConnections(token));
+    };
 
     if (loading) return <Loading />
 
@@ -130,7 +183,18 @@ const Connections = () => {
                 {/* CONNECTIONS */}
                 <div className="flex flex-wrap gap-6 mt-6">
                     {dataArray.find((item) => item.label === currentTab)?.value.map((row) => {
-                        const user = normalizeUser(row, currentTab);
+                        const { user, connectionId: normalizedId } = normalizeUser(row, currentTab);
+
+                        let connectionId = normalizedId;
+                        if (currentTab === "Pending") {
+                            const sent = pendingSent.find((u) => u.to_user_id._id === user._id);
+                            if (sent?._id) connectionId = sent._id;
+                        }
+                        
+                        const isConnected = connections.some((u) => u._id === user._id);
+                        const isPendingSent = pendingSent.some((u) => u.to_user_id._id === user._id);
+                        const isPendingReceived = pendingConnections.some((u) => u.from_user_id._id === user._id);
+                        const canSendConnection = !isConnected && !isPendingReceived && !isPendingSent;
 
                         return (
                             <div
@@ -151,57 +215,241 @@ const Connections = () => {
                                     <p className="text-sm text-slate-600">{user?.bio && user.bio.slice(0, 30)}...</p>
 
                                     <div className="flex max-sm:flex-col gap-2 mt-4">
-                                        <button
-                                            onClick={() => router.push(`/auth/profile/${user?._id}`)}
-                                            className="w-full p-2 text-sm rounded bg-linear-to-r
-                                         from-indigo-500 to-purple-600 hover:from-indigo-600
-                                          hover:to-purple-700 active:scale-95 transition
-                                           text-white cursor-pointer"
-                                        >
-                                            Profile
-                                        </button>
+                                        <div className='relative group flex justify-center items-center'>
+                                            <button
+                                                onClick={() => router.push(`/auth/profile/${user?._id}`)}
+                                                className="p-3 text-sm rounded bg-linear-to-r
+                                            from-indigo-500 to-purple-600 hover:from-indigo-600
+                                            hover:to-purple-700 active:scale-95 transition
+                                            text-white cursor-pointer"
+                                            >
+                                                <Eye className="w-5 h-5" />
+                                            </button>
+
+                                            {/* Tooltip */}
+                                            <div
+                                                className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                            rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                                            opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                View this profile
+                                            </div>
+                                        </div>
+
+                                        {currentTab === "Followers" && (
+                                            <>
+                                                {!currentUser?.following?.includes(user._id) && (
+                                                    <button
+                                                        onClick={() => handleFollow(user._id)}
+                                                        className="w-full py-2 rounded flex justify-center items-center
+                                                            gap-1 bg-linear-to-r from-indigo-500 to-purple-600
+                                                        hover:from-indigo-600 hover:to-purple-700
+                                                            active:scale-95 transition text-white cursor-pointer"
+                                                    >
+                                                        <UserPlus className="w-5 h-5" />
+                                                        Follow
+                                                    </button>
+                                                )}
+
+                                                {canSendConnection && (
+                                                    <div className='relative group flex justify-center items-center'>
+                                                        <button
+                                                            onClick={() => handleConnectionRequest(user._id)}
+                                                            className="w-full p-3 text-sm rounded bg-slate-100
+                                                        hover:bg-slate-200 text-slate-500 active:scale-95
+                                                        transition cursor-pointer"
+                                                        >
+                                                            <Plus className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                        </button>
+
+                                                        {/* Tooltip */}
+                                                        <div
+                                                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                                rounded-md bg-gray-800 text-white text-xs
+                                                                whitespace-nowrap opacity-0
+                                                                group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            Send Connection Request
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                            </>
+                                        )}
 
                                         {currentTab === "Following" && (
-                                            <button
-                                                className="w-full p-2 text-sm rounded bg-slate-100
-                                             hover:bg-slate-200 text-black active:scale-95
-                                              transition cursor-pointer"
-                                            >
-                                                Unfollow
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => handleUnfollow(user._id)}
+                                                    className="w-full py-2 rounded flex justify-center items-center
+                                                        gap-1 bg-linear-to-r from-indigo-500 to-purple-600
+                                                    hover:from-indigo-600 hover:to-purple-700
+                                                        active:scale-95 transition text-white cursor-pointer"
+                                                >
+                                                    <UserPlus className="w-5 h-5" />
+                                                    Unfollow
+                                                </button>
+
+                                                {canSendConnection && (
+                                                    <div className='relative group flex justify-center items-center'>
+                                                        <button
+                                                            onClick={() => handleConnectionRequest(user._id)}
+                                                            className="w-full p-3 text-sm rounded bg-slate-100
+                                                        hover:bg-slate-200 text-slate-500 active:scale-95
+                                                        transition cursor-pointer"
+                                                        >
+                                                            <Plus className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                        </button>
+
+                                                        {/* Tooltip */}
+                                                        <div
+                                                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                                rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                                                opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            Send Connection Request
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+
                                         )}
 
                                         {currentTab === "Pending" && (
-                                            <button
-                                                className="w-full p-2 text-sm rounded bg-slate-100
-                                             hover:bg-slate-200 text-black active:scale-95
-                                              transition cursor-pointer"
-                                            >
-                                                Cancel
-                                            </button>
+                                            <>
+                                                <div className='relative group flex justify-center items-center'>
+                                                    <button
+                                                        onClick={() => handleCancelRequest(connectionId)}
+                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                        hover:bg-slate-200 text-red-500 active:scale-95
+                                                        transition cursor-pointer"
+                                                    >
+                                                        <X className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                    </button>
+
+                                                    {/* Tooltip */}
+                                                    <div
+                                                        className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                                rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                                                opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        Cancel connection request
+                                                    </div>
+                                                </div>
+
+                                                {!currentUser?.following?.includes(user._id) && (
+                                                    <button
+                                                        onClick={() => handleFollow(user._id)}
+                                                        className="w-full py-2 rounded flex justify-center items-center
+                                                            gap-1 bg-linear-to-r from-indigo-500 to-purple-600
+                                                        hover:from-indigo-600 hover:to-purple-700
+                                                            active:scale-95 transition text-white cursor-pointer"
+                                                    >
+                                                        <UserPlus className="w-5 h-5" />
+                                                        Follow
+                                                    </button>
+                                                )}
+                                            </>
                                         )}
 
                                         {currentTab === "Incoming" && (
-                                            <button
-                                                className="w-full p-2 text-sm rounded bg-slate-100
-                                             hover:bg-slate-200 text-black active:scale-95
-                                              transition cursor-pointer"
-                                            >
-                                                Accept
-                                            </button>
+                                            <>
+                                                <div className='relative group flex justify-center items-center'>
+                                                    <button
+                                                        onClick={() => handleAccept(user._id)}
+                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                    hover:bg-slate-200 text-green-500 active:scale-95
+                                                    transition cursor-pointer"
+                                                    >
+                                                        <Check className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                    </button>
+
+                                                    {/* Tooltip */}
+                                                    <div
+                                                        className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                            rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                                            opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        Accept Connection Request
+                                                    </div>
+                                                </div>
+
+                                                <div className='relative group flex justify-center items-center'>
+                                                    <button
+                                                        onClick={() => handleDecline(user._id)}
+                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                    hover:bg-slate-200 text-red-500 active:scale-95
+                                                    transition cursor-pointer"
+                                                    >
+                                                        <X className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                    </button>
+
+                                                    {/* Tooltip */}
+                                                    <div
+                                                        className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                            rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                                            opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        Reject Connection Request
+                                                    </div>
+                                                </div>
+                                            </>
                                         )}
 
-
                                         {currentTab === "Connections" && (
-                                            <button
-                                                onClick={() => router.push(`/auth/chatBox/${user?._id}`)}
-                                                className="w-full p-2 text-sm rounded bg-slate-100
-                                             hover:bg-slate-200 text-black active:scale-95
-                                              transition cursor-pointer flex items-center justify-center gap-1"
-                                            >
-                                                <MessageSquare className="w-4 h-4" />
-                                                Message
-                                            </button>
+                                            <>
+                                                <div className='relative group flex justify-center items-center'>
+                                                    <button
+                                                        onClick={() => router.push(`/auth/chatBox/${user?._id}`)}
+                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                            hover:bg-slate-200 text-black active:scale-95
+                                                            transition cursor-pointer flex items-center justify-center gap-1"
+                                                    >
+                                                        <MessageSquare className="w-5 h-5" />
+                                                    </button>
+
+                                                    {/* Tooltip */}
+                                                    <div
+                                                        className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                            rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                                            opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        Send a message to this user
+                                                    </div>
+                                                </div>
+
+                                                {!currentUser?.following?.includes(user._id) && (
+                                                    <button
+                                                        onClick={() => handleFollow(user._id)}
+                                                        className="w-full py-2 rounded flex justify-center items-center
+                                                            gap-1 bg-linear-to-r from-indigo-500 to-purple-600
+                                                        hover:from-indigo-600 hover:to-purple-700
+                                                            active:scale-95 transition text-white cursor-pointer"
+                                                    >
+                                                        <UserPlus className="w-5 h-5" />
+                                                        Follow
+                                                    </button>
+                                                )}
+
+                                                <div className='relative group flex justify-center items-center'>
+                                                    <button
+                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                            hover:bg-slate-200 text-red-500 active:scale-95
+                                                            transition cursor-pointer flex items-center justify-center gap-1"
+                                                    >
+                                                        <CircleX className="w-5 h-5" />
+                                                    </button>
+
+                                                    {/* Tooltip */}
+                                                    <div
+                                                        className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
+                                                            rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                                            opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        Remove connection
+                                                    </div>
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                 </div>

@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         connection.status = "accepted";
         await connection.save();
 
-        return NextResponse.json({ success: true, message: "Connection accepted successfully" });
+        return NextResponse.json({ success: true, message: "Connection request accepted" });
 
     } catch (error) {
         const errMesage = error instanceof Error ? error.message : "An unknown error occurred";

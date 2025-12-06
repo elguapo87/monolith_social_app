@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
         await connectionModel.deleteOne({ _id: connection._id });
 
-        return NextResponse.json({ success: true, message: "Connection request declined" });
+        return NextResponse.json({ success: true, message: "Connection request rejected" });
 
     } catch (error) {
         const errMesage = error instanceof Error ? error.message : "An unknown error occurred";

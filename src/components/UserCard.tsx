@@ -203,7 +203,7 @@ const UserCard = ({ user }: UserProps) => {
                                     px-2 py-1 rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
                                     opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                                Accept
+                                Accept Connection Request
                             </div>
                         </div>
 
@@ -223,7 +223,7 @@ const UserCard = ({ user }: UserProps) => {
                                     px-2 py-1 rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
                                     opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                                Reject
+                                Reject Connection Request
                             </div>
                         </div>
 
