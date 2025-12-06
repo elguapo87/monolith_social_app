@@ -26,7 +26,7 @@ export default function AuthGuard({ children } : { children: React.ReactNode }) 
             getToken().then((token: string | null) => {
                 if (token) {
                     dispatch(fetchUser(token));
-                    dispatch(fetchConnections(token));
+                    // dispatch(fetchConnections(token));
                 } 
             });
         }

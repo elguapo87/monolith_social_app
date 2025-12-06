@@ -35,7 +35,7 @@ export interface ConnectionState {
 }
 
 interface ConnectionPayload {
-    id: string;
+    id: string | null;
     token: string | null;
 }
 

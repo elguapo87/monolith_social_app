@@ -8,7 +8,6 @@ import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import moment from "moment";
 import ProfileModal from "@/components/ProfileModal";
-
 import { assets } from "../../../../public/assets";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -49,7 +48,6 @@ const CurrentProfile = () => {
                     <UserProfileInfo
                         user={user}
                         posts={posts}
-                        profileId={currentUserId || undefined}
                         setShowEdit={setShowEdit}
                     />
                 </div>
