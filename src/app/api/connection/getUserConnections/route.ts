@@ -12,7 +12,31 @@ export async function GET() {
 
         const user = await userModel.findById(authUser._id).populate("connections followers following");
 
-        const connections = user.connections;
+        const acceptedConnections = await connectionModel.find({
+            $or: [
+                { from_user_id: authUser._id },
+                { to_user_id: authUser._id }
+            ],
+            status: "accepted"
+        }).populate("from_user_id to_user_id");
+
+        // Map to a normalized structure so you have connectionId and the other user
+        const connectionsWithId = acceptedConnections.map((conn) => {
+            const otherUser = conn.from_user_id._id === authUser._id ? conn.to_user_id : conn.from_user_id;
+            return {
+                _id: otherUser._id,
+                full_name: otherUser.full_name,
+                email: otherUser.email,
+                user_name: otherUser.user_name,
+                bio: otherUser.bio,
+                profile_picture: otherUser.profile_picture,
+                followers: otherUser.followers,
+                following: otherUser.following,
+                connections: otherUser.connections,
+                connectionId: conn._id
+            }
+        });
+
         const followers = user.followers;
         const following = user.following;
 
@@ -28,11 +52,11 @@ export async function GET() {
             status: "pending"
         }).populate("to_user_id");
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             success: true,
-            connections,
-            followers, 
-            following, 
+            connections: connectionsWithId,
+            followers,
+            following,
             pendingConnections,  // incoming 
             pendingSent,  // outgoing 
         });

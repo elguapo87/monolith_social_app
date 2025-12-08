@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
 import { useAuth } from '@clerk/nextjs';
-import { acceptConnectionRequest, cancelConnectionRequest, declineConnectionRequest, fetchConnections, IUser, PendingData, sendConnection } from '@/redux/slices/connectionSlice';
+import { acceptConnectionRequest, cancelConnectionRequest, declineConnectionRequest, deleteConnection, fetchConnections, IUser, PendingData, sendConnection } from '@/redux/slices/connectionSlice';
 import Loading from '@/components/Loading';
 import { followUser, unfollowUser } from '@/redux/slices/userSlice';
 
@@ -80,6 +80,14 @@ const Connections = () => {
             };
         }
 
+        if (tab === "Connections") {
+            return {
+                user: toFullUser(item as IUser),
+                connectionId: (item as IUser).connectionId || null,   // FIX
+                otherUserId: (item as IUser)._id
+            };
+        }
+
         // Followers, following, connections
         return {
             user: toFullUser(item as IUser),
@@ -118,12 +126,19 @@ const Connections = () => {
         await dispatch(acceptConnectionRequest({ id, token }));
         dispatch(fetchConnections(token));
     };
-    
+
     const handleDecline = async (id: string) => {
         const token = await getToken();
         await dispatch(declineConnectionRequest({ id, token }));
         dispatch(fetchConnections(token));
     };
+
+    const handleDelete = async (connectionId: string | null) => {
+        if (!connectionId) return;
+        const token = await getToken();
+        await dispatch(deleteConnection({ connectionId, token }));
+        dispatch(fetchConnections(token));
+    }
 
     if (loading) return <Loading />
 
@@ -190,7 +205,7 @@ const Connections = () => {
                             const sent = pendingSent.find((u) => u.to_user_id._id === user._id);
                             if (sent?._id) connectionId = sent._id;
                         }
-                        
+
                         const isConnected = connections.some((u) => u._id === user._id);
                         const isPendingSent = pendingSent.some((u) => u.to_user_id._id === user._id);
                         const isPendingReceived = pendingConnections.some((u) => u.from_user_id._id === user._id);
@@ -433,6 +448,7 @@ const Connections = () => {
 
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
+                                                        onClick={() => handleDelete(connectionId)}
                                                         className="w-full p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-red-500 active:scale-95
                                                             transition cursor-pointer flex items-center justify-center gap-1"

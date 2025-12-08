@@ -14,6 +14,7 @@ export interface IUser {
     followers?: string[];
     following?: string[];
     connections?: string[];
+    connectionId?: string; 
 }
 
 export interface PendingData {
@@ -149,6 +150,25 @@ export const cancelConnectionRequest = createAsyncThunk("connection/cancelConnec
     }
 });
 
+export const deleteConnection = createAsyncThunk("connection/deleteConnection", async ({ connectionId, token }: { connectionId: string, token: string | null }, { rejectWithValue }) => {
+    try {                                  
+        const { data } = await api.post("/connection/deleteConnection", { connectionId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed delete connection");;
+            return rejectWithValue(data.message);
+        }
+
+        return { connectionId, message: data.message };
+
+    } catch (error) {
+        toast.error("Failed delete connection");;
+        return rejectWithValue("Failed delete connection");
+    }
+});
+
 const connectionSlice = createSlice({
     name: "connection",
     initialState,
@@ -212,6 +232,17 @@ const connectionSlice = createSlice({
             .addCase(cancelConnectionRequest.rejected, (state, action) => {
                 state.loading = true;
                 toast.error((action.payload as string) || "Failed to cancel connection request");
+            })
+            .addCase(deleteConnection.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deleteConnection.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(deleteConnection.rejected, (state, action) => {
+                state.loading = true;
+                toast.error((action.payload as string) || "Failed delete connection");
             })
     }
 })
