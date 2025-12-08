@@ -101,7 +101,7 @@ const UserCard = ({ user }: UserProps) => {
                     alt=""
                     width={64}
                     height={64}
-                    className="rounded-full w-16 shadow-md mx-auto"
+                    className="rounded-full aspect-square w-16 shadow-md mx-auto"
                 />
 
                 <p className="mt-4 font-semibold">{user.full_name}</p>

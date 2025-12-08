@@ -1,5 +1,5 @@
 import imageKit from "@/config/imageKit";
-import { inngest } from "@/inngest/client";
+import { sendInngestEvent } from "@/lib/inngestHttpSender";
 import { protectUser } from "@/middleware/userAuth";
 import storyModel from "@/models/storyModel";
 import { NextResponse } from "next/server";
@@ -78,9 +78,13 @@ export async function POST(req: Request) {
         });
 
         // Schedule story deletion after 24hr
-        await inngest.send({
-            name: "app/story-delete",
-            data: { storyId:  story._id.toString()}
+        // await inngest.send({
+        //     name: "app/story-delete",
+        //     data: { storyId:  story._id.toString()}
+        // })
+
+        await sendInngestEvent("app/story-delete", {
+            data: { storyId:  story._id.toString() }
         })
 
         return NextResponse.json({

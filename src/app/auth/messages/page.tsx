@@ -1,13 +1,30 @@
 "use client"
 
 import Image from "next/image"
-import { dummyConnectionsData } from "../../../../public/assets"
+import { assets } from "../../../../public/assets"
 import { Eye, MessageSquare } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useDispatch, useSelector } from "react-redux"
+import { AppDispatch, RootState } from "@/redux/store"
+import { useEffect } from "react"
+import { fetchConnections } from "@/redux/slices/connectionSlice"
+import { useAuth } from "@clerk/nextjs"
 
 const Messages = () => {
 
+    const connections = useSelector((state: RootState) => state.connection.connections);
+    const dispatch = useDispatch<AppDispatch>();
+    const { getToken } = useAuth();
+
     const router = useRouter();
+    
+    useEffect(() => {
+        const getConnections = async () => {
+            const token = await getToken();
+            dispatch(fetchConnections(token));
+        }
+        getConnections();
+    }, []);
 
     return (
         <div className="min-h-screen relative bg-slate-50">
@@ -20,22 +37,22 @@ const Messages = () => {
 
                 {/* CONNECTED USERS */}
                 <div className="flex flex-col gap-3">
-                    {dummyConnectionsData.map((user) => (
+                    {connections.map((user) => (
                         <div 
                             key={user._id} 
                             className="max-w-xl flex flex-wrap gap-5 p-6 bg-white shadow rounded-md"
                         >
                             <Image
-                                src={user.profile_picture}
+                                src={user.profile_picture || assets.avatar_icon}
                                 width={48}
                                 height={48}
                                 alt=""
-                                className="rounded-ful aspect-square size-12 mx-auto"
+                                className="rounded-full aspect-square size-12 mx-auto"
                             />
 
                             <div className="flex-1">
                                 <p className="font-medium text-slate-700">{user.full_name}</p>
-                                <p className="text-slate-500">@{user.username}</p>
+                                <p className="text-slate-500">@{user.user_name}</p>
                                 <p className="text-sm text-slate-600">{user.bio}</p>
                             </div>
 

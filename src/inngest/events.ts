@@ -4,4 +4,10 @@ export type AppEvents = {
       connectionId: string;
     };
   };
+
+  "app/story-delete": {
+    data: {
+      storyId: string;
+    };
+  }
 };
