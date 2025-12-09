@@ -2,12 +2,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./slices/userSlice";
 import postReducer from "./slices/postSlice";
 import connectionReducer from "./slices/connectionSlice"
+import messageReducer from "./slices/messageSlice"
 
 export const store = configureStore({
     reducer: {  
         user: userReducer,
         post: postReducer,
-        connection: connectionReducer
+        connection: connectionReducer,
+        message: messageReducer
     }
 });
 

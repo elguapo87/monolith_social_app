@@ -16,7 +16,8 @@ export async function POST(req: Request) {
                 { from_user_id: user._id, to_user_id },
                 { from_user_id: to_user_id, to_user_id: user._id }
             ]
-        }).sort({ createdAt: -1 });
+        })
+            .sort({ createdAt: -1 });
 
         // Mark messages as seen
         await messageModel.updateMany(

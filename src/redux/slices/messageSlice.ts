@@ -1,18 +1,17 @@
 import api from "@/lib/axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
-import { IUser } from "./connectionSlice";
 
 interface MessageData {
     _id: string;
-    from_user_id: IUser
-    to_user_id: IUser
-    text: string
-    message_type: string
-    media_url: string
+    from_user_id: string;
+    to_user_id: string;
+    text: string;
+    message_type: "text" | "image";
+    media_url?: string
     seen: boolean
-    createdAt?: Date
-    updatedAt?: Date,
+    createdAt: Date | string
+    updatedAt: Date | string,
 }
 
 interface MessagesPayload {
@@ -59,7 +58,7 @@ const messageSlice = createSlice({
         addMessage: (state, action) => {
             state.messages = [...state.messages, action.payload]
         },
-        resetMessages: (state, action) => {
+        resetMessages: (state) => {
             state.messages = [];
         }
     },
@@ -77,5 +76,7 @@ const messageSlice = createSlice({
             })
     }
 })
+
+export const { setMessages, addMessage, resetMessages } = messageSlice.actions;
 
 export default messageSlice.reducer;
