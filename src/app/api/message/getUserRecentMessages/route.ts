@@ -2,7 +2,7 @@ import { protectUser } from "@/middleware/userAuth";
 import messageModel from "@/models/messageModel";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         const { authorized, user } = await protectUser();
         if (!authorized || !user) {

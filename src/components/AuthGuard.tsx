@@ -1,21 +1,24 @@
 "use client"
 
 import { useAuth, useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import Loading from "./Loading";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchUser } from "@/redux/slices/userSlice";
-import { fetchConnections } from "@/redux/slices/connectionSlice";
+import { addMessage } from "@/redux/slices/messageSlice";
 
 
-export default function AuthGuard({ children } : { children: React.ReactNode }) {
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const { isLoaded, user } = useUser();
     const { getToken } = useAuth();
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
-    const userState = useSelector((state: RootState) => state.user.value)
+    const userState = useSelector((state: RootState) => state.user.value);
+
+    const pathname = usePathname();
+    const pathnameRef = useRef(pathname);
 
     useEffect(() => {
         if (isLoaded && !user) {
@@ -26,12 +29,34 @@ export default function AuthGuard({ children } : { children: React.ReactNode }) 
             getToken().then((token: string | null) => {
                 if (token) {
                     dispatch(fetchUser(token));
-                    // dispatch(fetchConnections(token));
-                } 
+                }
             });
         }
 
-    }, [isLoaded, user, router, dispatch, userState, getToken]);      
+    }, [isLoaded, user, router, dispatch, userState, getToken]);
+
+    useEffect(() => {
+        pathnameRef.current = pathname;
+    }, [pathname]);
+
+    useEffect(() => {
+        if (!userState?._id) return;
+
+        const eventSource = new EventSource(`/api/sse/${userState._id}`);
+
+        eventSource.addEventListener("new-message", (event) => {
+            const message = JSON.parse(event.data);
+
+            if (pathnameRef.current === `/auth/chatBox/${message.from_user_id._id}`) {
+                dispatch(addMessage(message));
+            }
+        });
+
+
+        return () => eventSource.close();
+
+    }, [userState?._id, dispatch]);
+
 
     if (!isLoaded) {
         return <Loading />

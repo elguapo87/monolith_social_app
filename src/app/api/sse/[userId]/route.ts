@@ -1,28 +1,28 @@
-import connections from "@/sse/connections";
+import { NextRequest } from "next/server";
+import { registerConnection, removeConnection } from "@/sse/bus";
 
-export async function GET(req: Request, { params }: { params: { userId: string } }) {
-    const { userId } = params;
+export async function GET(req: NextRequest, context: any) {
+  const { userId } = await context.params;
 
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
+  const stream = new ReadableStream({
+    start(controller) {
+      registerConnection(userId, controller);
 
-    // Store the connection
-    connections[userId] = writer;
+      controller.enqueue(
+        new TextEncoder().encode(`event: connected\ndata: "connected"\n\n`)
+      );
 
-    // Send initial handshake
-    await writer.write(`event: connected\ndata: "SSE connected"\n\n`);
+      req.signal.onabort = () => {
+        removeConnection(userId, controller);
+      };
+    }
+  });
 
-    // When the client disconnects, remove writer
-    req.signal.addEventListener("abort", () => {
-        delete connections[userId];
-        writer.close();
-    });
-
-    return new Response(stream.readable, {
-        headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache, no-transform",
-            "Connection": "keep-alive",
-        }
-    });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive"
+    }
+  });
 }

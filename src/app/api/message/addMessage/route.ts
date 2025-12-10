@@ -2,8 +2,8 @@ import imageKit from "@/config/imageKit";
 import { protectUser } from "@/middleware/userAuth";
 import messageModel from "@/models/messageModel";
 import userModel from "@/models/userModel";
-import connections from "@/sse/connections";
 import { NextResponse } from "next/server";
+import { sendSSEvent } from "@/sse/bus";
 
 export async function POST(req: Request) {
     try {
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
         const message_type: "text" | "image" = msgImage ? "image" : "text";
 
-        const message = await messageModel.create({
+        let message = await messageModel.create({
             from_user_id: user._id,
             to_user_id,
             text: text || "",
@@ -70,16 +70,16 @@ export async function POST(req: Request) {
             message_type
         });
 
-        // Send SSE event to receiver if online
-        if (connections[to_user_id]) {
-            const writer = connections[to_user_id];
+        // Populate before sending to SSE
+        message = await message.populate("from_user_id")
 
-            await writer.write(
-                `event: new-message\ndata: ${JSON.stringify(message)}\n\n`
-            );
-        }
+        // Convert to clean plain JSON object
+        const messagePayload = JSON.parse(JSON.stringify(message));
 
-        return NextResponse.json({ success: true, message });
+        sendSSEvent(to_user_id, "new-message", messagePayload);
+        sendSSEvent(user._id, "new-message", messagePayload);
+
+        return NextResponse.json({ success: true, message: messagePayload });
 
     } catch (error) {
         console.error("Add message error:", error);
