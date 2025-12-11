@@ -145,11 +145,12 @@ const ChatBox = () => {
                                 >
                                     {message.message_type === "image" && (
                                         <Image
+                                            onClick={() => window.open(message.media_url)}
                                             src={message.media_url ?? ""}
                                             alt=""
                                             width={500}
                                             height={500}
-                                            className="w-full max-w-sm rounded-lg mb-1"
+                                            className="w-full max-w-sm rounded-lg mb-1 cursor-pointer"
                                         />
                                     )}
                                     <p>{message.text}</p>
