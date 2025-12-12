@@ -79,6 +79,23 @@ export async function POST(req: Request) {
         sendSSEvent(to_user_id, "new-message", messagePayload);
         sendSSEvent(user._id, "new-message", messagePayload);
 
+        // Build notification payload
+        const notificationPayload = {
+            from_user_id: user._id,
+            last_message_text: message.text,
+            last_message_media: message.media_url,
+            unread_count: 1,
+            last_message_date: message.createdAt,
+            user: {
+                _id: user._id,
+                full_name: user.full_name,
+                profile_picture: user.profile_picture
+            }
+        };
+
+        // Send notification to receiver
+        sendSSEvent(to_user_id, "new-notification", notificationPayload);
+
         return NextResponse.json({ success: true, message: messagePayload });
 
     } catch (error) {

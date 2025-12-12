@@ -8,6 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchUser } from "@/redux/slices/userSlice";
 import { addMessage } from "@/redux/slices/messageSlice";
+import { addOrUpdateNotification } from "@/redux/slices/notificationSlice";
+import api from "@/lib/axios";
 
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -44,14 +46,32 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         const eventSource = new EventSource(`/api/sse/${userState._id}`);
 
-        eventSource.addEventListener("new-message", (event) => {
+        eventSource.addEventListener("new-message", async (event) => {
             const message = JSON.parse(event.data);
 
-            if (pathnameRef.current === `/auth/chatBox/${message.from_user_id._id}`) {
+            const isOnChatPage =
+                pathnameRef.current === `/auth/chatBox/${message.from_user_id._id}`;
+
+            if (isOnChatPage) {
                 dispatch(addMessage(message));
+
+                // NEW CODE – mark as seen in database
+                const token = await getToken();
+                const { data } = await api.post("/message/markAsSeen", { from_user_id: message.from_user_id._id }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (data.success) {
+                    return data;
+                }
             }
         });
 
+        eventSource.addEventListener("new-notification", (event) => {
+            const data = JSON.parse(event.data);
+
+            dispatch(addOrUpdateNotification(data));
+        });
 
         return () => eventSource.close();
 
