@@ -10,6 +10,7 @@ import { fetchUser } from "@/redux/slices/userSlice";
 import { addMessage } from "@/redux/slices/messageSlice";
 import { addOrUpdateNotification } from "@/redux/slices/notificationSlice";
 import api from "@/lib/axios";
+import { addPendingConnection } from "@/redux/slices/connectionSlice";
 
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -60,7 +61,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 const { data } = await api.post("/message/markAsSeen", { from_user_id: message.from_user_id._id }, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                
+
                 if (data.success) {
                     return data;
                 }
@@ -71,6 +72,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             const data = JSON.parse(event.data);
 
             dispatch(addOrUpdateNotification(data));
+        });
+
+        eventSource.addEventListener("connection-request", (event) => {
+            const payload = JSON.parse(event.data);
+            dispatch(addPendingConnection(payload));
         });
 
         return () => eventSource.close();

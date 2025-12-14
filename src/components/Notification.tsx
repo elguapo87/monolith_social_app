@@ -15,19 +15,6 @@ type SidebarProps = {
     setSidebarOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-type MsgType = {
-    from_user_id: string;
-    last_message_date: Date | string;
-    last_message_media: string | null;
-    last_message_text: string | "";
-    unread_count: number;
-    user: {
-        full_name: string;
-        profile_picture: string;
-        _id: string;
-    };
-}
-
 const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
     const { getToken } = useAuth();
@@ -36,7 +23,6 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const dispatch = useDispatch<AppDispatch>();
 
     const [showMenu, setShowMenu] = useState(false);
-    // const [unreadMessages, setUnreadMessages] = useState<MsgType[]>([]);
     const menuRef = useRef<HTMLDivElement | null>(null);
     const router = useRouter();
 

@@ -2,6 +2,7 @@ import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
 import { NextResponse } from "next/server";
 import { sendInngestEvent } from "@/lib/inngestHttpSender";
+import { sendSSEvent } from "@/sse/bus";
 
 export async function POST(req: Request) {
     try {
@@ -39,13 +40,16 @@ export async function POST(req: Request) {
             const newConnection = await connectionModel.create({
                 from_user_id: user._id,
                 to_user_id: id,
-            });
+            })
+                .then(conn =>
+                    conn.populate("from_user_id", "full_name user_name bio profile_picture")
+                );
 
             try {
                 await sendInngestEvent("app/connection-request", {
                     data: { connectionId: newConnection._id.toString() }
                 });
-                
+
             } catch (err) {
                 console.error("Failed to send inngest event:", err);
                 // do not fail the whole request just because the background event failed,
@@ -55,6 +59,15 @@ export async function POST(req: Request) {
                     message: "Connection saved but failed to notify background worker",
                 });
             }
+
+            // SEND REAL-TIME EVENT TO RECEIVER
+            sendSSEvent(id, "connection-request", {
+                _id: newConnection._id,
+                from_user_id: newConnection.from_user_id,
+                to_user_id: { _id: id },
+                status: "pending",
+                createdAt: newConnection.createdAt
+            });
 
             return NextResponse.json({ success: true, message: "Connection request sent", connection: newConnection });
 

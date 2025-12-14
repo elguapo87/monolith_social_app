@@ -14,7 +14,7 @@ export interface IUser {
     followers?: string[];
     following?: string[];
     connections?: string[];
-    connectionId?: string; 
+    connectionId?: string;
 }
 
 export interface PendingData {
@@ -151,7 +151,7 @@ export const cancelConnectionRequest = createAsyncThunk("connection/cancelConnec
 });
 
 export const deleteConnection = createAsyncThunk("connection/deleteConnection", async ({ connectionId, token }: { connectionId: string, token: string | null }, { rejectWithValue }) => {
-    try {                                  
+    try {
         const { data } = await api.post("/connection/deleteConnection", { connectionId }, {
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -172,7 +172,23 @@ export const deleteConnection = createAsyncThunk("connection/deleteConnection", 
 const connectionSlice = createSlice({
     name: "connection",
     initialState,
-    reducers: {},
+    reducers: {
+        addPendingConnection: (state, action) => {
+            const exists = state.pendingConnections.some(
+                (c) => c._id === action.payload._id
+            );
+
+            if (!exists) {
+                state.pendingConnections.unshift(action.payload);
+            }
+        },
+
+        removePendingConnection: (state, action) => {
+            state.pendingConnections = state.pendingConnections.filter(
+                (c) => c._id !== action.payload
+            );
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchConnections.pending, (state) => {
@@ -246,5 +262,7 @@ const connectionSlice = createSlice({
             })
     }
 })
+
+export const { addPendingConnection, removePendingConnection } = connectionSlice.actions;
 
 export default connectionSlice.reducer;

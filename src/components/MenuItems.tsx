@@ -3,9 +3,7 @@ import { usePathname } from 'next/navigation';
 import Loading from './Loading';
 import { Home, MessageCircle, Search, UserIcon, Users } from 'lucide-react'
 import Link from 'next/link';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
-import { current } from '@reduxjs/toolkit';
+import ConnectionNotification from './ConnectionNotification';
 
 type SidebarProps = {
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -13,10 +11,8 @@ type SidebarProps = {
 
 const MenuItems = ({ setSidebarOpen }: SidebarProps) => {
 
-  const currentUser = useSelector((state: RootState) => state.user.value);
-
   const pathName = usePathname();
-  const { user, isLoaded } = useUser();
+  const { isLoaded } = useUser();
 
   if (!isLoaded) {
     return <Loading />
@@ -31,9 +27,10 @@ const MenuItems = ({ setSidebarOpen }: SidebarProps) => {
   ];
 
   return (
-    <div className="px-6 text-gray-600 space-y-1 font-medium">
+    <div className="relative px-6 text-gray-600 space-y-1 font-medium">
       {menuItemsData.map(({ to, label, Icon }) => {
         const isActive = pathName === to;
+        const isConnections = to === "/auth/connections";
 
         return (
           <Link
@@ -45,6 +42,10 @@ const MenuItems = ({ setSidebarOpen }: SidebarProps) => {
           >
             <Icon className="w-5 h-5" />
             {label}
+
+            {isConnections && (
+              <ConnectionNotification />
+            )}
           </Link>
         )
       })}
