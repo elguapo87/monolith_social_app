@@ -1,16 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 type NotificationItem = {
-    from_user_id: string;
-    last_message_text?: string;
-    last_message_media?: string | null;
-    unread_count: number;
     user: {
         _id: string;
         full_name: string;
         profile_picture: string;
-    };
-    last_message_date: string | Date;
+    }
+
+    message_type: "text" | "image";
+    latest_message: string;
+    media_url?: string | null;
+    latest_created_at: string | Date;
+    unread_count: number;
+    is_unread: boolean;
 };
 
 type NotificationState = {
@@ -33,12 +35,13 @@ const notificationSlice = createSlice({
             const index = state.items.findIndex((n) => n.user._id === incoming.user._id);
 
             if (index >= 0) {
-                // Update unread count + last message
-                state.items[index].unread_count += incoming.unread_count;
-                state.items[index].last_message_text = incoming.last_message_text;
-                state.items[index].last_message_media = incoming.last_message_media;
-                state.items[index].last_message_date = incoming.last_message_date;
-
+                state.items[index] = {
+                    ...state.items[index],
+                    ...incoming,
+                    unread_count: state.items[index].unread_count + incoming.unread_count,
+                    is_unread: true
+                };
+                
             } else {
                 // Add new notification
                 state.items.push(incoming);

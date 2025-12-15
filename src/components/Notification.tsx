@@ -19,7 +19,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
     const { getToken } = useAuth();
 
-    const unreadMessages = useSelector((state: RootState) => state.notifications.items);
+    const unreadMessages = useSelector((state: RootState) => state.notifications.items || []);
     const dispatch = useDispatch<AppDispatch>();
 
     const [showMenu, setShowMenu] = useState(false);
@@ -29,28 +29,30 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const totalUnread = unreadMessages.reduce((sum, msg) => sum + msg.unread_count, 0);
 
     useEffect(() => {
-        const fetchUnreadMessages = async () => {
+        const fetchRecentConversations = async () => {
             try {
                 const token = await getToken();
 
-                const { data } = await api.get("/message/getUnseenMessages", {
+                const { data } = await api.get("/message/getUserRecentMessages", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
                 if (data.success) {
-                     dispatch(setNotifications(data.unread));
+                    // Keep ONLY unread conversations
+                    const unreadOnly = data.recent_messages.filter((c: any) => c.unread_count > 0);
+
+                    dispatch(setNotifications(unreadOnly));
 
                 } else {
                     toast.error(data.message);
                 }
 
             } catch (error) {
-                const err = error instanceof Error ? error.message : "Unknown error";
-                toast.error(err);
+                toast.error("Failed to fetch notifications");
             }
         };
 
-        fetchUnreadMessages();
+        fetchRecentConversations();
     }, [showMenu, sidebarOpen]);
 
     useEffect(() => {
@@ -117,8 +119,8 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                             {msg.user.full_name}
                                         </p>
                                         <p className="text-xs text-gray-500 -mt-1">
-                                           {msg.unread_count} unread message
-                                           {msg.unread_count > 1 && "s"}
+                                            {msg.unread_count} unread message
+                                            {msg.unread_count > 1 && "s"}
                                         </p>
                                     </div>
                                     <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
