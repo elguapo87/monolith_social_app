@@ -39,7 +39,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
                 if (data.success) {
                     // Keep ONLY unread conversations
-                    const unreadOnly = data.recent_messages.filter((c: any) => c.unread_count > 0);
+                    const unreadOnly = data.recent_messages.filter((c: Record<string, number>) => c.unread_count > 0);
 
                     dispatch(setNotifications(unreadOnly));
 
@@ -79,7 +79,10 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 <Bell size={28} />
 
                 {totalUnread > 0 && (
-                    <div className="absolute -top-2 -right-2 w-3 h-3 rounded-full bg-red-300 flex items-center justify-center p-2.5">
+                    <div
+                        className="absolute -top-2 -right-2 w-3 h-3 rounded-full bg-red-500
+                         text-white flex items-center justify-center p-2.5"
+                    >
                         <p className="text-sm font-semibold">{totalUnread}</p>
                     </div>
                 )}

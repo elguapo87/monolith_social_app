@@ -6,11 +6,14 @@ import moment from "moment";
 import api from "@/lib/axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { setNotifications } from "@/redux/slices/notificationSlice";
 
 type RecentMessagesType = {
   latest_created_at: string | Date;
   latest_message: string;
-  media_url: string | "";
+  media_url: string | ""; 
   unread_count: number;
   user: {
     full_name: string
@@ -35,25 +38,22 @@ const RecentMessages = () => {
       });
 
       if (data.success) {
-        setMessages(data.recent_messages);
+        setMessages(data.recent_messages.slice(0, 5));
 
       } else {
         toast.error(data.message);
       }
 
     } catch (error) {
-      console.error(error);
+      toast.error("Failed to fetch messages");
     }
   };
-
-  console.log(messages);
-
 
   useEffect(() => {
     fetchRecentMessages();
   }, [getToken]);
 
-  return (
+  return messages.length > 0 && (
     <div className="bg-white max-w-xs mt-4 p-4 min-h-20 rounded-md shadow text-xs text-slate-800">
       <h3 className="font-semibold text-slate-800 mb-4">Recent Messages</h3>
 
@@ -85,7 +85,7 @@ const RecentMessages = () => {
                   <p className="text-gray-500">{message.latest_message.slice(0, 20)}</p>
                 )}
                 {message.unread_count > 0 && (
-                  <p className="bg-indigo-500 text-white w-4 h-4 flex items-center justify-center rounded-full text-[10px]">
+                  <p className="bg-red-500 text-white w-4 h-4 flex items-center justify-center rounded-full text-[10px]">
                     {message.unread_count}
                   </p>
                 )}
