@@ -7,19 +7,23 @@ import MenuItems from "./MenuItems";
 import Link from "next/link";
 import { CirclePlus, LogOut } from "lucide-react";
 import { UserButton, useClerk } from "@clerk/nextjs";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
 import Notification from "./Notification";
+import { clearUser } from "@/redux/slices/userSlice";
+import { clearNotifications } from "@/redux/slices/notificationSlice";
+import { resetMessages } from "@/redux/slices/messageSlice";
 
 type AuthLayoutProps = {
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const Sidebar = ({ sidebarOpen, setSidebarOpen } : AuthLayoutProps) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }: AuthLayoutProps) => {
 
   const user = useSelector((state: RootState) => state.user.value);
   const { signOut } = useClerk();
+  const dispatch = useDispatch<AppDispatch>();
 
   const router = useRouter();
 
@@ -35,13 +39,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen } : AuthLayoutProps) => {
       </div>
 
       <div className="w-full">
-        <Image 
-          onClick={() => router.push("/auth")} 
+        <Image
+          onClick={() => router.push("/auth")}
           src={assets.monolith_logo}
-          width={120} 
-          height={40} 
-          alt="Logo" 
-          className="w-26 ml-7 my-2 cursor-pointer" 
+          width={120}
+          height={40}
+          alt="Logo"
+          className="w-26 ml-7 my-2 cursor-pointer"
         />
 
         <hr className="border-gray-300 mb-8" />
@@ -69,8 +73,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen } : AuthLayoutProps) => {
         </div>
 
         <LogOut
-          onClick={() => void signOut()} 
-          className="w-4.5 text-gray-400 hover:text-gray-700 transition cursor-pointer" 
+          className="w-4.5 text-gray-400 hover:text-gray-700 transition cursor-pointer"
+          onClick={async () => {
+            dispatch(clearUser());
+            dispatch(clearNotifications());
+            dispatch(resetMessages());
+            await signOut();
+          }}
         />
       </div>
     </div>

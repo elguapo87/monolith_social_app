@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react"
-import { assets, dummyRecentMessagesData } from "../../public/assets";
+import { assets } from "../../public/assets";
 import Link from "next/link";
 import Image from "next/image";
 import moment from "moment";
 import api from "@/lib/axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/redux/store";
-import { setNotifications } from "@/redux/slices/notificationSlice";
 
 type RecentMessagesType = {
   latest_created_at: string | Date;
@@ -62,7 +59,7 @@ const RecentMessages = () => {
           <Link
             key={index}
             href={`/auth/chatBox/${message.user._id}`}
-            className="flex items-start gap-2 py-2 hover:bg-slate-100"
+            className="flex items-start gap-2 px-2.5 py-2 rounded-lg hover:bg-slate-100"
           >
             <Image
               src={message.user.profile_picture || assets.avatar_icon}
@@ -85,7 +82,7 @@ const RecentMessages = () => {
                   <p className="text-gray-500">{message.latest_message.slice(0, 20)}</p>
                 )}
                 {message.unread_count > 0 && (
-                  <p className="bg-red-500 text-white w-4 h-4 flex items-center justify-center rounded-full text-[10px]">
+                  <p className="bg-red-500 text-white size-4 flex items-center justify-center rounded-full text-[10px]">
                     {message.unread_count}
                   </p>
                 )}

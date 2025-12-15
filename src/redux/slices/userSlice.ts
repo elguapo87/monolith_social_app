@@ -164,7 +164,14 @@ export const unfollowUser = createAsyncThunk("user/unfollow", async ({ targetUse
 const userSlice = createSlice({
     name: "user",
     initialState,
-    reducers: {},
+    reducers: {
+        clearUser: (state) => {
+            state.value = null;
+            state.profileData = null;
+            state.profilePosts = [];
+            state.loading = false;
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchUser.pending, (state) => {
@@ -176,6 +183,7 @@ const userSlice = createSlice({
             })
             .addCase(fetchUser.rejected, (state) => {
                 state.loading = false;
+                state.value = null;
             })
             .addCase(updateProfile.pending, (state) => {
                 state.loading = true;
@@ -285,5 +293,7 @@ const userSlice = createSlice({
             })
     }
 })
+
+export const { clearUser } = userSlice.actions;
 
 export default userSlice.reducer;

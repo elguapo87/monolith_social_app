@@ -9,6 +9,7 @@ import { assets } from '../../public/assets';
 import { useDispatch, useSelector } from 'react-redux';
 import { setNotifications } from '@/redux/slices/notificationSlice';
 import { AppDispatch, RootState } from '@/redux/store';
+import moment from 'moment';
 
 type SidebarProps = {
     sidebarOpen?: boolean;
@@ -117,14 +118,19 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                         height={40}
                                         className="rounded-full object-cover size-10"
                                     />
-                                    <div className="flex-1">
+                                    <div className="flex-1 flex flex-col">
                                         <p className="font-medium text-sm text-gray-800">
                                             {msg.user.full_name}
                                         </p>
-                                        <p className="text-xs text-gray-500 -mt-1">
+                                        <p className="text-xs text-gray-500">
                                             {msg.unread_count} unread message
                                             {msg.unread_count > 1 && "s"}
                                         </p>
+                                        <span
+                                            className='text-xs text-gray-400'
+                                        >
+                                            {moment(msg.latest_created_at).fromNow()}
+                                        </span>
                                     </div>
                                     <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
                                         {msg.unread_count}
