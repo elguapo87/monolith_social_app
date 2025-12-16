@@ -7,32 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
 import { toggleLike } from "@/redux/slices/postSlice";
+import type { Post } from "@/redux/slices/postSlice";
 
-type PostType = {
-    _id: string;
-    user: {
-        _id: string;
-        full_name: string;
-        email: string;
-        profile_picture?: string;
-        user_name?: string;
-        bio?: string;
-        location?: string;
-        cover_photo?: string;
-        followers?: string[];
-        following?: string[];
-        connections?: string[];
-        createdAt?: Date;
-    },
-    content: string;
-    image_urls: string[];
-    post_type: string;
-    likes_count: string[];
-    createdAt?: Date;
-    updatedAt?: Date;
-};
-
-const PostCard = ({ post }: { post: PostType }) => {
+const PostCard = ({ post }: { post: Post }) => {
 
     const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>');
 
@@ -113,7 +90,7 @@ const PostCard = ({ post }: { post: PostType }) => {
 
                 <div className="flex items-center gap-1">
                     <MessageCircle className="w-4 h-4" />
-                    <span>{12}</span>
+                    <span>{post.commentCount ?? 0}</span>
                 </div>
 
                 <div className="flex items-center gap-1">

@@ -49,10 +49,6 @@ type ProfileProps = {
 
 const UserProfileInfo = ({ user, posts, setShowEdit, profileId }: ProfileProps) => {
 
-
-  console.log(`This is profileId: ${profileId}`);
-  
-
   return (
     <div className="relative py-4 px-6 md:px-8 bg-white">
       <div className="flex flex-col md:flex-row items-start gap-6">

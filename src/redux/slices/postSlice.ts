@@ -2,7 +2,7 @@ import api from "@/lib/axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 
-interface PostUser {
+export interface PostUser {
     _id: string;
     full_name: string;
     email: string;
@@ -17,7 +17,7 @@ interface PostUser {
     createdAt?: Date;
 }
 
-interface Post {
+export interface Post {
     _id: string;
     user: PostUser;
     content: string;
@@ -26,6 +26,7 @@ interface Post {
     likes_count: string[];
     createdAt?: Date;
     updatedAt?: Date;
+    commentCount?: number
 }
 
 interface PostState {
