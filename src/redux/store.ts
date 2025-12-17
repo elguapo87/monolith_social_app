@@ -4,6 +4,7 @@ import postReducer from "./slices/postSlice";
 import connectionReducer from "./slices/connectionSlice"
 import messageReducer from "./slices/messageSlice"
 import notificationReducer from "./slices/notificationSlice";
+import commentReducer from "./slices/commentSlice";
 
 export const store = configureStore({
     reducer: {  
@@ -11,7 +12,8 @@ export const store = configureStore({
         post: postReducer,
         connection: connectionReducer,
         message: messageReducer,
-        notifications: notificationReducer
+        notifications: notificationReducer,
+        comments: commentReducer
     }
 });
 

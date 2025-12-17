@@ -8,6 +8,8 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
 import { toggleLike } from "@/redux/slices/postSlice";
 import type { Post } from "@/redux/slices/postSlice";
+import { useState } from "react";
+import PostComments from "./PostComments";
 
 const PostCard = ({ post }: { post: Post }) => {
 
@@ -20,6 +22,8 @@ const PostCard = ({ post }: { post: Post }) => {
     const currentUser = useSelector((state: RootState) => state.user.value);
 
     const router = useRouter();
+
+    const [showComments, setShowComments] = useState(false);
 
     const handleLike = async () => {
         const token = await getToken();
@@ -88,8 +92,11 @@ const PostCard = ({ post }: { post: Post }) => {
                     <span>{likes.length}</span>
                 </div>
 
-                <div className="flex items-center gap-1">
-                    <MessageCircle className="w-4 h-4" />
+                <div 
+                    className="flex items-center gap-1 cursor-pointer" 
+                    onClick={() => post.commentCount && post.commentCount > 0 && setShowComments(prev => !prev)}
+                >
+                    <MessageCircle  className="w-4 h-4" />
                     <span>{post.commentCount ?? 0}</span>
                 </div>
 
@@ -98,6 +105,8 @@ const PostCard = ({ post }: { post: Post }) => {
                     <span>{7}</span>
                 </div>
             </div>
+
+            {showComments && <PostComments />}
         </div>
     )
 }

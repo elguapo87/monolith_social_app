@@ -9,8 +9,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: "Unauthorized" });
         }
 
-        const { text } = await req.json();
-        const { post_id } = await req.json();
+        const { text, post_id } = await req.json();
 
         const newComment = await commentModel.create({
             user_id: user._id,
