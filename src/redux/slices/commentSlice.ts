@@ -4,9 +4,13 @@ import toast from "react-hot-toast";
 
 interface Comment {
     _id: string;
-    post_id: string;
-    user_id: string;
     text: string;
+    post_id: string;
+    user_id: {
+        _id: string;
+        full_name: string;
+        profile_picture: string | "";
+    };
     createdAt: string;
 };
 
@@ -44,6 +48,24 @@ export const addComment = createAsyncThunk("comment/addComment", async ({ text, 
     }
 });
 
+export const fetchComments = createAsyncThunk("comment/getComments", async (token: string | null, { rejectWithValue }) => {
+    try {
+        const { data } = await api.get("/comment/getComments", {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue("Failed to get comments");
+        }
+
+        return data.comments;
+
+    } catch (error) {
+        toast.error("Failed to get comments");
+        return rejectWithValue("Failed to get comments");
+    }
+});
+
 const commentSlice = createSlice({
     name: "comments",
     initialState,
@@ -61,6 +83,17 @@ const commentSlice = createSlice({
             .addCase(addComment.rejected, (state, action) => {
                 state.loading = true;
                 toast.error((action.payload as string) || "Failed to send comment");
+            })
+            .addCase(fetchComments.pending, (state) => {
+                state.loading = true
+            })
+            .addCase(fetchComments.fulfilled, (state, action) => {
+                state.loading = false;
+                state.comments = action.payload;
+            })
+            .addCase(fetchComments.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to fetch comments");
             })
     }
 });
