@@ -92,6 +92,30 @@ export const fetchCommentCount = createAsyncThunk<
     }
 });
 
+export const deleteComment =
+    createAsyncThunk(
+        "comment/deleteComment", async ({ commentId, token }: { commentId: string, token: string | null },
+            { rejectWithValue }) => {
+        try {
+            const { data } = await api.post("/comment/deleteComment", { commentId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!data.success) {
+                toast.error(data.message);
+                return rejectWithValue(data.message);
+            }
+
+            return {
+                commentId: data.commentId,
+                postId: data.postId
+            }
+
+        } catch (error) {
+            toast.error("Failed to remove comment");
+            return rejectWithValue("Failed to remove comment");
+        }
+    });
 
 const commentSlice = createSlice({
     name: "comments",
@@ -116,7 +140,7 @@ const commentSlice = createSlice({
             .addCase(addComment.fulfilled, (state, action) => {
                 state.loading = false;
                 state.comments.unshift(action.payload);
-                
+
                 const postId = action.payload.post_id;
                 state.commentCount[postId] = (state.commentCount[postId] ?? 0) + 1;
             })
@@ -134,6 +158,22 @@ const commentSlice = createSlice({
             .addCase(fetchCommentCount.rejected, (state, action) => {
                 state.loading = false;
                 toast.error((action.payload as string) || "Failed to fetch comment count");
+            })
+            .addCase(deleteComment.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deleteComment.fulfilled, (state, action) => {
+                state.loading = false;
+                
+                state.comments = state.comments.filter((c) => c._id !== action.payload.commentId);
+                state.commentCount[action.payload.postId] =
+                Math.max((state.commentCount[action.payload.postId] ?? 1) - 1, 0);
+
+                toast.success("Comment removed");
+            })
+            .addCase(deleteComment.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to remove comment");
             })
     }
 });

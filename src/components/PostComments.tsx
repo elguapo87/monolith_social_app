@@ -5,12 +5,13 @@ import { assets } from "../../public/assets";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import { addComment, fetchComments } from "@/redux/slices/commentSlice";
+import { addComment, deleteComment, fetchComments } from "@/redux/slices/commentSlice";
 import moment from "moment";
 
 const PostComments = ({ postId }: { postId: string }) => {
 
-    const { comments, loading } = useSelector((state: RootState) => state.comments)
+    const { comments, loading } = useSelector((state: RootState) => state.comments);
+    const currentUser = useSelector((state: RootState) => state.user.value);
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
 
@@ -25,6 +26,11 @@ const PostComments = ({ postId }: { postId: string }) => {
 
         dispatch(addComment({ post_id: postId, text, token }));
         setText("");
+    };
+
+    const handleDelete = async (id: string) => {
+        const token = await getToken();
+        dispatch(deleteComment({ commentId: id, token }));
     };
 
     useEffect(() => {
@@ -57,7 +63,7 @@ const PostComments = ({ postId }: { postId: string }) => {
                         />
                         <button
                             type="submit"
-
+                            disabled={loading}
                             className="p-1 text-indigo-600 hover:text-indigo-800 cursor-pointer"
                         >
                             <Send className="size-4" />
@@ -89,6 +95,18 @@ const PostComments = ({ postId }: { postId: string }) => {
                                     </div>
                                     <span className="text-gray-700">{comment.text}</span>
                                 </div>
+
+                                {/* Delete button (visible on hover) */}
+                                {currentUser?._id === comment.user_id._id && (
+                                    <button
+                                        onClick={() => handleDelete(comment._id)}
+                                        disabled={loading}
+                                        className="opacity-0 group-hover:opacity-100 text-gray-400 cursor-pointer
+                                            hover:text-red-500 hover:opacity-100 transition font-semibold ml-1"
+                                    >    
+                                        X
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>

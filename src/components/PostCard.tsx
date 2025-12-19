@@ -11,6 +11,7 @@ import type { Post } from "@/redux/slices/postSlice";
 import { useEffect, useState } from "react";
 import PostComments from "./PostComments";
 import { fetchCommentCount } from "@/redux/slices/commentSlice";
+import toast from "react-hot-toast";
 
 
 const PostCard = ({ post }: { post: Post }) => {
@@ -32,6 +33,27 @@ const PostCard = ({ post }: { post: Post }) => {
         const token = await getToken();
         if (!token || !currentUser?._id) return;
         dispatch(toggleLike({ postId: post._id, userId: currentUser._id, token }));
+    };
+
+    const handleShare = async (postId: string) => {
+        const postUrl = `${window.location.origin}/auth/post/${postId}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: "Check out this post!",
+                    text: "I found this post interesting:",
+                    url: postUrl
+                });
+
+            } catch (err) {
+                console.log("Share cancelled or failed:", err);
+            }
+
+        } else {
+            navigator.clipboard.writeText(postUrl);
+            toast.success("Post link copied to clipboard!");
+        }
     };
 
     useEffect(() => {
@@ -113,8 +135,7 @@ const PostCard = ({ post }: { post: Post }) => {
                 </div>
 
                 <div className="flex items-center gap-1">
-                    <Share2 className="w-4 h-4" />
-                    <span>{7}</span>
+                    <Share2 onClick={() => handleShare(post._id)} className="w-4 h-4" />
                 </div>
             </div>
 
