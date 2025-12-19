@@ -8,13 +8,16 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
 import { toggleLike } from "@/redux/slices/postSlice";
 import type { Post } from "@/redux/slices/postSlice";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PostComments from "./PostComments";
+import { fetchCommentCount } from "@/redux/slices/commentSlice";
+
 
 const PostCard = ({ post }: { post: Post }) => {
 
     const postWithHashtags = post.content.replace(/(#\w+)/g, '<span class="text-indigo-600">$1</span>');
 
+    const commentCount = useSelector((state: RootState) => state.comments.commentCount[post._id] ?? 0);
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
 
@@ -30,6 +33,15 @@ const PostCard = ({ post }: { post: Post }) => {
         if (!token || !currentUser?._id) return;
         dispatch(toggleLike({ postId: post._id, userId: currentUser._id, token }));
     };
+
+    useEffect(() => {
+        const load = async () => {
+            const token = await getToken();
+            dispatch(fetchCommentCount({ postId: post._id, token }))
+        };
+
+        load();
+    }, [post._id]);
 
     return (
         <div className="bg-white rounded-xl shadow p-4 space-y-4 w-full max-w-2xl">
@@ -94,10 +106,10 @@ const PostCard = ({ post }: { post: Post }) => {
 
                 <div 
                     className="flex items-center gap-1 cursor-pointer" 
-                    onClick={() => post.commentCount && post.commentCount > 0 && setShowComments(prev => !prev)}
+                    onClick={() => setShowComments(prev => !prev)}
                 >
                     <MessageCircle  className="w-4 h-4" />
-                    <span>{post.commentCount ?? 0}</span>
+                    <span>{commentCount}</span>
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -106,7 +118,7 @@ const PostCard = ({ post }: { post: Post }) => {
                 </div>
             </div>
 
-            {showComments && <PostComments />}
+            {showComments && <PostComments postId={post._id} />}
         </div>
     )
 }

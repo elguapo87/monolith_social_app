@@ -26,7 +26,6 @@ export interface Post {
     likes_count: string[];
     createdAt?: Date;
     updatedAt?: Date;
-    commentCount?: number
 }
 
 interface PostState {

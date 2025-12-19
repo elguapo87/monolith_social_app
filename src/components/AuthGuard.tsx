@@ -10,7 +10,7 @@ import { fetchUser } from "@/redux/slices/userSlice";
 import { addMessage } from "@/redux/slices/messageSlice";
 import { addOrUpdateNotification } from "@/redux/slices/notificationSlice";
 import api from "@/lib/axios";
-import { addPendingConnection, fetchConnections } from "@/redux/slices/connectionSlice";
+import { addPendingConnection } from "@/redux/slices/connectionSlice";
 
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {

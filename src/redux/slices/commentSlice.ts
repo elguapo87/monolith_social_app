@@ -11,42 +11,26 @@ interface Comment {
         full_name: string;
         profile_picture: string | "";
     };
-    createdAt: string;
+    createdAt: string | Date;
 };
 
 interface CommentState {
     comments: Comment[];
+    commentCount: Record<string, number>;
     loading: boolean;
-}
+};
 
 interface CommentPayload {
-    text: string;
     post_id: string;
+    text: string;
     token: string | null;
-};
+}
 
 const initialState: CommentState = {
     comments: [],
-    loading: false
+    commentCount: {},
+    loading: false,
 };
-
-export const addComment = createAsyncThunk("comment/addComment", async ({ text, post_id, token }: CommentPayload, { rejectWithValue }) => {
-    try {
-        const { data } = await api.post("/comment/addComment", { text, post_id }, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (!data.success) {
-            return rejectWithValue("Failed to send comment");
-        }
-
-        return data.comment;
-
-    } catch (error) {
-        toast.error("Failed to send comment");
-        return rejectWithValue("Failed to send comment");
-    }
-});
 
 export const fetchComments = createAsyncThunk("comment/getComments", async (token: string | null, { rejectWithValue }) => {
     try {
@@ -55,16 +39,59 @@ export const fetchComments = createAsyncThunk("comment/getComments", async (toke
         });
 
         if (!data.success) {
-            return rejectWithValue("Failed to get comments");
+            return rejectWithValue(data.message || "Failed to fetch comments");
         }
 
         return data.comments;
 
     } catch (error) {
-        toast.error("Failed to get comments");
-        return rejectWithValue("Failed to get comments");
+        toast.error("Failed to fetch comments");
+        return rejectWithValue("Failed to fetch comments");
     }
 });
+
+export const addComment = createAsyncThunk("comment/addComment", async ({ post_id, text, token }: CommentPayload, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/comment/addComment", { post_id, text }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue(data.message || "Failed to create comment");
+        }
+
+        return data.comment;
+
+    } catch (error) {
+        toast.error("Failed to create comment");
+        return rejectWithValue("Failed to create comment");
+    }
+});
+
+export const fetchCommentCount = createAsyncThunk<
+    { postId: string, count: number },
+    { postId: string, token: string | null }
+>("comment/countByPosts", async ({ postId, token }, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/comment/countByPosts", { postIds: [postId] }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue(data.message);
+        }
+
+        return {
+            postId,
+            count: data.counts[postId] ?? 0
+        }
+
+    } catch (error) {
+        toast.error("Failed to fetch comment count");
+        return rejectWithValue("Failed to fetch comment count");
+    }
+});
+
 
 const commentSlice = createSlice({
     name: "comments",
@@ -72,20 +99,8 @@ const commentSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(addComment.pending, (state) => {
-                state.loading = true
-            })
-            .addCase(addComment.fulfilled, (state, action) => {
-                state.loading = false;
-                state.comments.unshift(action.payload);
-                
-            })
-            .addCase(addComment.rejected, (state, action) => {
-                state.loading = true;
-                toast.error((action.payload as string) || "Failed to send comment");
-            })
             .addCase(fetchComments.pending, (state) => {
-                state.loading = true
+                state.loading = true;
             })
             .addCase(fetchComments.fulfilled, (state, action) => {
                 state.loading = false;
@@ -94,6 +109,31 @@ const commentSlice = createSlice({
             .addCase(fetchComments.rejected, (state, action) => {
                 state.loading = false;
                 toast.error((action.payload as string) || "Failed to fetch comments");
+            })
+            .addCase(addComment.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(addComment.fulfilled, (state, action) => {
+                state.loading = false;
+                state.comments.unshift(action.payload);
+                
+                const postId = action.payload.post_id;
+                state.commentCount[postId] = (state.commentCount[postId] ?? 0) + 1;
+            })
+            .addCase(addComment.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to create comment");
+            })
+            .addCase(fetchCommentCount.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchCommentCount.fulfilled, (state, action) => {
+                state.loading = false;
+                state.commentCount[action.payload.postId] = action.payload.count;
+            })
+            .addCase(fetchCommentCount.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to fetch comment count");
             })
     }
 });

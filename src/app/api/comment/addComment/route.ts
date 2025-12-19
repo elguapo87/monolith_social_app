@@ -9,7 +9,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: "Unauthorized" });
         }
 
-        const { text, post_id } = await req.json();
+        const { post_id, text } = await req.json();
 
         const newComment = await commentModel.create({
             user_id: user._id,
@@ -17,7 +17,12 @@ export async function POST(req: Request) {
             text
         });
 
-        return NextResponse.json({ success: true, comment: newComment });
+        const populatedComment = await newComment.populate({
+            path: "user_id",
+            select: "full_name profile_picture"
+        });
+       
+        return NextResponse.json({ success: true, comment: populatedComment });
 
     } catch (error) {
         const errMesage = error instanceof Error ? error.message : "An unknown error occurred";

@@ -15,43 +15,7 @@ export async function GET() {
         // User connections & followings
         const userIds = [...new Set([authUser._id, ...user.connections, ...user.following])];
 
-        const posts = await postModel.aggregate([
-            {
-                $match: {
-                    user: { $in: userIds }
-                }
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "user",
-                    foreignField: "_id",
-                    as: "user"
-                }
-            },
-            { $unwind: "$user" },
-            {
-                $lookup: {
-                    from: "comments",
-                    localField: "_id",
-                    foreignField: "post_id",
-                    as: "comments"
-                }
-            },
-            {
-                $addFields: {
-                    commentCount: { $size: "$comments" }
-                }
-            },
-            {
-                $project: {
-                    comments: 0
-                }
-            },
-            {
-                $sort: { createdAt: -1 }
-            }
-        ])
+        const posts = await postModel.find({ user: { $in: userIds } }).populate("user").sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, posts });
 
