@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import PostComments from "./PostComments";
 import { fetchCommentCount } from "@/redux/slices/commentSlice";
 import toast from "react-hot-toast";
+import PostModal from "./PostModal";
 
 
 const PostCard = ({ post }: { post: Post }) => {
@@ -28,6 +29,7 @@ const PostCard = ({ post }: { post: Post }) => {
     const router = useRouter();
 
     const [showComments, setShowComments] = useState(false);
+    const [showPost, setShowPost] = useState(false);
 
     const handleLike = async () => {
         const token = await getToken();
@@ -95,13 +97,14 @@ const PostCard = ({ post }: { post: Post }) => {
             {/* CONTENT */}
             {post.content && (
                 <div
-                    className="text-gray-800 text-sm whitespace-pre-line"
+                    onClick={() => setShowPost(true)}
+                    className="text-gray-800 text-sm whitespace-pre-line cursor-pointer"
                     dangerouslySetInnerHTML={{__html: postWithHashtags}}
                 />
             )}
 
             {/* IMAGES */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 cursor-pointer" onClick={() => setShowPost(true)}>
                 {post.image_urls.map((img, index) => (
                     <Image 
                         key={index}
@@ -140,6 +143,9 @@ const PostCard = ({ post }: { post: Post }) => {
             </div>
 
             {showComments && <PostComments postId={post._id} />}
+
+            {/* SHOW SINGLE POST */}
+            {showPost && <PostModal setShowPost={setShowPost} singlePost={post} />}
         </div>
     )
 }

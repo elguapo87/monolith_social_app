@@ -88,6 +88,26 @@ export const toggleLike = createAsyncThunk("post/toggleLike", async ({ postId, t
     }
 });
 
+export const getPostById = createAsyncThunk("post/getPost", async ({ postId, token }: { postId: string, token: string | null }, { rejectWithValue }) => {
+    try {
+        const { data } = await api.get("/post/getPost", {
+            params: { postId },
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to fetch post");
+            return rejectWithValue(data.message || "Failed to fetch post");
+        }
+
+        return data.post as Post;
+
+    } catch (error) {
+        toast.error("Failed to fetch post");
+        return rejectWithValue("Failed to fetch post");
+    }
+});
+
 const postSlice = createSlice({
     name: "post",
     initialState,
@@ -126,7 +146,7 @@ const postSlice = createSlice({
             .addCase(toggleLike.fulfilled, (state, action) => {
                 const { postId, message } = action.payload as { postId: string, message: string };
                 const post = state.posts.find((p) => p._id === postId);
-                if(!post) {
+                if (!post) {
                     // clear any stale pending entry
                     delete state.pendingLikeMap[postId];
                     return;
@@ -139,7 +159,7 @@ const postSlice = createSlice({
                     return;
                 }
 
-                toast.success(message); 
+                toast.success(message);
 
                 if (message === "Post liked") {
                     if (!post.likes_count.includes(metaUserId)) {
@@ -179,13 +199,26 @@ const postSlice = createSlice({
                         }
                     }
                 }
-                
+
                 // cleanup
                 delete state.pendingLikeMap[postId];
 
                 // surface error to user
                 toast.error(typeof action.payload === "string" ? action.payload : "Failed to toggle like");
-            });
+            })
+            .addCase(getPostById.fulfilled, (state, action) => {
+                const incomingPost = action.payload;
+
+                const index = state.posts.findIndex((p) => p._id === incomingPost._id);
+                if (index !== -1) {
+                    // update existing post
+                    state.posts[index] = incomingPost;
+
+                } else {
+                    // insert new post
+                    state.posts.push(incomingPost);
+                }
+            })
     }
 });
 
