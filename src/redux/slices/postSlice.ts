@@ -108,6 +108,26 @@ export const getPostById = createAsyncThunk("post/getPost", async ({ postId, tok
     }
 });
 
+export const deletePost = createAsyncThunk("post/deletePost", async ({ postId, token }: { postId: string, token: string | null }, { rejectWithValue }) => {
+    try {
+        const { data } = await api.post("/post/deletePost", { postId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue(data.message || "Failed to delete post");
+        }
+
+        return {
+            postId, 
+            message: data.message
+        }
+
+    } catch (error) {
+        return rejectWithValue("Failed to delete post");
+    }
+});
+
 const postSlice = createSlice({
     name: "post",
     initialState,
@@ -218,6 +238,21 @@ const postSlice = createSlice({
                     // insert new post
                     state.posts.push(incomingPost);
                 }
+            })
+            .addCase(deletePost.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deletePost.fulfilled, (state, action) => {
+                const { postId, message } = action.payload;
+
+                state.posts = state.posts.filter((p) => p._id !== postId);
+                state.loading = false;
+
+                toast.success(message);
+            })
+            .addCase(deletePost.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to delete post");
             })
     }
 });

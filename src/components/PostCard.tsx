@@ -1,12 +1,12 @@
 import { assets } from "../../public/assets"
 import Image from "next/image";
-import { BadgeCheck, Heart, MessageCircle, Share2 } from "lucide-react";
+import { BadgeCheck, Heart, MessageCircle, Share2, Trash } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import { toggleLike } from "@/redux/slices/postSlice";
+import { deletePost, toggleLike } from "@/redux/slices/postSlice";
 import type { Post } from "@/redux/slices/postSlice";
 import { useEffect, useState } from "react";
 import PostComments from "./PostComments";
@@ -66,6 +66,13 @@ const PostCard = ({ post }: { post: Post }) => {
 
         load();
     }, [post._id]);
+
+    const handleDelete = async () => {
+        const token = await getToken();
+        if (!token) return;
+        
+        dispatch(deletePost({ postId: post._id, token }));
+    };
 
     return (
         <div className="bg-white rounded-xl shadow p-4 space-y-4 w-full max-w-2xl">
@@ -140,6 +147,12 @@ const PostCard = ({ post }: { post: Post }) => {
                 <div className="flex items-center gap-1">
                     <Share2 onClick={() => handleShare(post._id)} className="w-4 h-4" />
                 </div>
+                
+                {currentUser?._id === post.user._id && (
+                    <div className="flex items-center gap-1 cursor-pointer">
+                        <Trash onClick={handleDelete} className="w-4 h-4 text-red-600" />
+                    </div>
+                )}
             </div>
 
             {showComments && <PostComments postId={post._id} />}

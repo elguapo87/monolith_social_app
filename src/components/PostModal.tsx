@@ -1,10 +1,10 @@
 "use client"
 
 import { fetchCommentCount } from "@/redux/slices/commentSlice";
-import { getPostById, toggleLike, type Post } from "@/redux/slices/postSlice";
+import { deletePost, getPostById, toggleLike, type Post } from "@/redux/slices/postSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import { BadgeCheck, Heart, MessageCircle, Share2, X } from "lucide-react";
+import { BadgeCheck, Heart, MessageCircle, Share2, Trash, X } from "lucide-react";
 import moment from "moment";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -23,12 +23,10 @@ type Props = {
 const PostModal = ({ setShowPost, singlePost, postId, fullPage }: Props) => {
 
     const currentUser = useSelector((state: RootState) => state.user.value);
-    const post = useSelector((state: RootState) =>
-        postId
-            ? state.post.posts.find((p) => p._id === postId)
-            : singlePost ?? null
-    );
-
+    const post = useSelector((state: RootState) => {
+        const id = postId ?? singlePost?._id;
+        return id ? state.post.posts.find((p) => p._id === id) ?? null : null
+    });
     const resolvedPostId = post?._id ?? postId;
 
     const commentCount = useSelector((state: RootState) =>
@@ -37,7 +35,7 @@ const PostModal = ({ setShowPost, singlePost, postId, fullPage }: Props) => {
 
     const { getToken } = useAuth();
     const dispatch = useDispatch<AppDispatch>();
-    
+
     const [showComments, setShowComments] = useState(false);
 
     const likes = post?.likes_count;
@@ -90,6 +88,19 @@ const PostModal = ({ setShowPost, singlePost, postId, fullPage }: Props) => {
             toast.success("Post link copied to clipboard!");
         }
     };
+
+    const handleDelete = async () => {
+        const token = await getToken();
+        if (!token || !resolvedPostId) return;
+
+        dispatch(deletePost({ postId: resolvedPostId, token }));
+    };
+
+    useEffect(() => {
+        if (!post && setShowPost && !fullPage) {
+            setShowPost(false);
+        }
+    }, [post, setShowPost, fullPage]);
 
     return (
         <div
@@ -185,6 +196,12 @@ const PostModal = ({ setShowPost, singlePost, postId, fullPage }: Props) => {
                     <div className="flex items-center gap-1">
                         <Share2 onClick={() => post && handleShare(post._id)} className="w-4 h-4" />
                     </div>
+
+                    {(currentUser?._id === post?.user._id && !fullPage) && (
+                        <div className="flex items-center gap-1 cursor-pointer">
+                            <Trash onClick={handleDelete} className="w-4 h-4 text-red-600" />
+                        </div>
+                    )}
                 </div>
 
                 {showComments && post && (
