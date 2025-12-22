@@ -10,7 +10,14 @@ import moment from "moment";
 
 const PostComments = ({ postId }: { postId: string }) => {
 
-    const { comments, loading } = useSelector((state: RootState) => state.comments);
+    const comments = useSelector(
+        (state: RootState) => state.comments.commentsByPost[postId] || []
+    );
+
+    const loaded = useSelector(
+        (state: RootState) => state.comments.commentsLoaded[postId]
+    );
+
     const currentUser = useSelector((state: RootState) => state.user.value);
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
@@ -34,10 +41,14 @@ const PostComments = ({ postId }: { postId: string }) => {
     };
 
     useEffect(() => {
-        getToken().then((token: string | null) => {
-            dispatch(fetchComments(token));
+        if (loaded) return;
+
+        getToken().then((token) => {
+            dispatch(fetchComments({ postId, token }));
         });
-    }, [postId]);
+    }, [postId, loaded]);
+
+    console.log(comments);
 
     return (
         <div className="mt-2">
@@ -63,7 +74,7 @@ const PostComments = ({ postId }: { postId: string }) => {
                         />
                         <button
                             type="submit"
-                            disabled={loading}
+                            // disabled={loading}
                             className="p-1 text-indigo-600 hover:text-indigo-800 cursor-pointer"
                         >
                             <Send className="size-4" />
@@ -78,7 +89,7 @@ const PostComments = ({ postId }: { postId: string }) => {
 
                         {comments.map((comment) => (
                             <div key={comment._id} className="flex items-center gap-2">
-                                <Image 
+                                <Image
                                     src={comment.user_id.profile_picture || assets.avatar_icon}
                                     alt=""
                                     width={24}
@@ -88,7 +99,7 @@ const PostComments = ({ postId }: { postId: string }) => {
                                 <div className="bg-gray-100 rounded-lg px-3 py-1.5 text-sm flex items-start gap-3">
                                     <div className="flex flex-col items-start justify-center">
                                         <span className="font-medium text-gray-800">{comment.user_id.full_name}</span>{" "}
-                                        <span 
+                                        <span
                                             className="text-[10px] font-light text-gray-600 -mt-0.5">
                                             {moment(comment.createdAt).fromNow()}
                                         </span>
@@ -100,10 +111,10 @@ const PostComments = ({ postId }: { postId: string }) => {
                                 {currentUser?._id === comment.user_id._id && (
                                     <button
                                         onClick={() => handleDelete(comment._id)}
-                                        disabled={loading}
+                                        // disabled={loading}
                                         className="opacity-0 group-hover:opacity-100 text-gray-400 cursor-pointer
                                             hover:text-red-500 hover:opacity-100 transition font-semibold ml-1"
-                                    >    
+                                    >
                                         X
                                     </button>
                                 )}

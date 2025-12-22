@@ -5,20 +5,21 @@ import toast from "react-hot-toast";
 interface Comment {
     _id: string;
     text: string;
-    post_id: string;
+    post_id: string; // ALWAYS string in Redux
     user_id: {
         _id: string;
         full_name: string;
         profile_picture: string | "";
     };
-    createdAt: string | Date;
-};
+    createdAt: string;
+}
 
 interface CommentState {
-    comments: Comment[];
+    commentsByPost: Record<string, Comment[]>;
+    commentsLoaded: Record<string, boolean>;
     commentCount: Record<string, number>;
     loading: boolean;
-};
+}
 
 interface CommentPayload {
     post_id: string;
@@ -27,14 +28,15 @@ interface CommentPayload {
 }
 
 const initialState: CommentState = {
-    comments: [],
+    commentsByPost: {},
+    commentsLoaded: {},
     commentCount: {},
     loading: false,
 };
 
-export const fetchComments = createAsyncThunk("comment/getComments", async (token: string | null, { rejectWithValue }) => {
+export const fetchComments = createAsyncThunk("comment/getComments", async ({ postId, token }: { postId: string; token: string | null }, { rejectWithValue }) => {
     try {
-        const { data } = await api.get("/comment/getComments", {
+        const { data } = await api.get(`/comment/getComments/${postId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -42,7 +44,7 @@ export const fetchComments = createAsyncThunk("comment/getComments", async (toke
             return rejectWithValue(data.message || "Failed to fetch comments");
         }
 
-        return data.comments;
+        return { postId, comments: data.comments };
 
     } catch (error) {
         toast.error("Failed to fetch comments");
@@ -127,8 +129,15 @@ const commentSlice = createSlice({
                 state.loading = true;
             })
             .addCase(fetchComments.fulfilled, (state, action) => {
+                const { postId, comments } = action.payload;
+
+                state.commentsByPost[postId] = comments.map((c: any) => ({
+                    ...c,
+                    post_id: c.post_id.toString()
+                }));
+
+                state.commentsLoaded[postId] = true;
                 state.loading = false;
-                state.comments = action.payload;
             })
             .addCase(fetchComments.rejected, (state, action) => {
                 state.loading = false;
@@ -138,10 +147,18 @@ const commentSlice = createSlice({
                 state.loading = true;
             })
             .addCase(addComment.fulfilled, (state, action) => {
-                state.loading = false;
-                state.comments.unshift(action.payload);
+                const postId = action.payload.post_id.toString();
 
-                const postId = action.payload.post_id;
+                const comment = {
+                    ...action.payload,
+                    post_id: postId
+                };
+
+                if (!state.commentsByPost[postId]) {
+                    state.commentsByPost[postId] = [];
+                }
+
+                state.commentsByPost[postId].unshift(comment);
                 state.commentCount[postId] = (state.commentCount[postId] ?? 0) + 1;
             })
             .addCase(addComment.rejected, (state, action) => {
@@ -163,13 +180,12 @@ const commentSlice = createSlice({
                 state.loading = true;
             })
             .addCase(deleteComment.fulfilled, (state, action) => {
-                state.loading = false;
-                
-                state.comments = state.comments.filter((c) => c._id !== action.payload.commentId);
-                state.commentCount[action.payload.postId] =
-                Math.max((state.commentCount[action.payload.postId] ?? 1) - 1, 0);
+                const { postId, commentId } = action.payload;
 
-                toast.success("Comment removed");
+                state.commentsByPost[postId] = state.commentsByPost[postId]?.filter(c => c._id !== commentId) || [];
+
+                state.commentCount[postId] =
+                    Math.max((state.commentCount[postId] ?? 1) - 1, 0);
             })
             .addCase(deleteComment.rejected, (state, action) => {
                 state.loading = false;
