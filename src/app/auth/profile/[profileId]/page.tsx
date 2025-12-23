@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { assets } from "../../../../../public/assets";
 import Loading from "@/components/Loading";
 import Image from "next/image";
@@ -11,6 +11,10 @@ import Link from "next/link";
 import moment from "moment";
 import ProfileModal from "@/components/ProfileModal";
 import { useProfile } from "@/hooks/useProfile";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { useAuth } from "@clerk/nextjs";
+import { fetchLikedPosts } from "@/redux/slices/postSlice";
 
 const Profile = () => {
 
@@ -18,8 +22,24 @@ const Profile = () => {
 
     const { user, posts, loading, fetchUser } = useProfile(profileId);
 
+    const likedPosts = useSelector((state: RootState) => state.post.likedPosts);
+    const currentUser = useSelector((state: RootState) => state.user.value);
+    const dispatch = useDispatch<AppDispatch>();
+    const { getToken } = useAuth();
+
     const [activeTab, setActiveTab] = useState("posts");
     const [showEdit, setShowEdit] = useState(false);
+
+    const isOwnProfile = currentUser?._id === profileId;
+
+    useEffect(() => {
+        if (!isOwnProfile) return;
+        if (activeTab !== "likes") return;
+
+        getToken().then((token) => {
+            dispatch(fetchLikedPosts(token));
+        });
+    }, [activeTab, isOwnProfile, dispatch, getToken]);
 
     if (loading || !user) return <Loading />
 
@@ -54,7 +74,7 @@ const Profile = () => {
                 {/* TABS */}
                 <div className="mt-6">
                     <div className="bg-white rounded-xl shadow p-1 flex max-w-md mx-auto">
-                        {["posts", "media", "likes"].map((tab) => (
+                        {["posts", "media", ...(isOwnProfile ? ["likes"] : [])].map((tab) => (
                             <button
                                 onClick={() => setActiveTab(tab)}
                                 key={tab}
@@ -117,6 +137,20 @@ const Profile = () => {
                         ) : (
                             <p className="text-center text-slate-500 w-full">
                                 There are no posts with images yet.
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {isOwnProfile && activeTab === "likes" && (
+                    <div className="mt-6 flex flex-col items-center gap-6">
+                        {likedPosts.length > 0 ? (
+                            likedPosts.map((post) => (
+                                <PostCard key={post._id} post={post} />
+                            ))
+                        ) : (
+                            <p className="text-center text-slate-500 w-full">
+                                There are no liked posts yet.
                             </p>
                         )}
                     </div>

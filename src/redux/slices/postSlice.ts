@@ -32,6 +32,7 @@ interface PostState {
     posts: Post[];
     loading: boolean;
     pendingLikeMap: Record<string, boolean>;
+    likedPosts: Post[];
 }
 
 interface ToggleLikePayload {
@@ -43,7 +44,8 @@ interface ToggleLikePayload {
 const initialState: PostState = {
     posts: [],
     loading: false,
-    pendingLikeMap: {}
+    pendingLikeMap: {},
+    likedPosts: [],
 };
 
 export const getPosts = createAsyncThunk("post/getPosts", async (token: string | null, { rejectWithValue }) => {
@@ -119,12 +121,29 @@ export const deletePost = createAsyncThunk("post/deletePost", async ({ postId, t
         }
 
         return {
-            postId, 
+            postId,
             message: data.message
         }
 
     } catch (error) {
         return rejectWithValue("Failed to delete post");
+    }
+});
+
+export const fetchLikedPosts = createAsyncThunk("post/likedPosts", async (token: string | null, { rejectWithValue }) => {
+    try {
+        const { data } = await api.get("/post/likedPosts", {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue(data.message || "Failed to fetch liked posts");
+        }
+
+        return data.posts;
+
+    } catch (error) {
+        return rejectWithValue("Failed to fetch liked posts");
     }
 });
 
@@ -161,6 +180,19 @@ const postSlice = createSlice({
                     if (!post.likes_count.includes(userId)) {
                         post.likes_count.push(userId);
                     }
+                }
+
+                // OPTIMISTIC likedPosts sync
+                if (!wasLiked && post.user._id !== userId) {
+                    // like → add to likedPosts
+                    if (!state.likedPosts.find((p) => p._id === postId)) {
+                        state.likedPosts.unshift(post);
+                    }
+                }
+
+                if (wasLiked) {
+                    // unlike → remove from likedPosts
+                    state.likedPosts = state.likedPosts.filter((p) => p._id !== postId);
                 }
             })
             .addCase(toggleLike.fulfilled, (state, action) => {
@@ -205,9 +237,13 @@ const postSlice = createSlice({
                         if (previousLiked) {
                             // if previously liked, ensure userId exists
                             if (!post.likes_count.includes(userId)) post.likes_count.push(userId);
+
+                            if (post.user._id !== userId) state.likedPosts.unshift(post);
                         } else {
                             // if previously not liked, ensure userId is absent
                             post.likes_count = post.likes_count.filter((id) => id !== userId);
+
+                            state.likedPosts = state.likedPosts.filter((p) => p._id !== postId);
                         }
                     } else {
                         // no previous state recorded; as a fallback, toggle back
@@ -253,6 +289,17 @@ const postSlice = createSlice({
             .addCase(deletePost.rejected, (state, action) => {
                 state.loading = false;
                 toast.error((action.payload as string) || "Failed to delete post");
+            })
+            .addCase(fetchLikedPosts.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchLikedPosts.fulfilled, (state, action) => {
+                state.loading = false;
+                state.likedPosts = action.payload;
+            })
+            .addCase(fetchLikedPosts.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to fetch liked posts");
             })
     }
 });

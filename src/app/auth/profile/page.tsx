@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Loading from "@/components/Loading";
 import Image from "next/image";
 import UserProfileInfo from "@/components/UserProfileInfo";
@@ -9,9 +9,11 @@ import Link from "next/link";
 import moment from "moment";
 import ProfileModal from "@/components/ProfileModal";
 import { assets } from "../../../../public/assets";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@clerk/nextjs";
+import { fetchLikedPosts } from "@/redux/slices/postSlice";
 
 const CurrentProfile = () => {
 
@@ -20,8 +22,20 @@ const CurrentProfile = () => {
 
     const { user, posts, loading, fetchUser } = useProfile(currentUserId as string);
 
+    const likedPosts = useSelector((state: RootState) => state.post.likedPosts);
+    const dispatch = useDispatch<AppDispatch>();
+    const { getToken } = useAuth();
+
     const [activeTab, setActiveTab] = useState("posts");
     const [showEdit, setShowEdit] = useState(false);
+
+    useEffect(() => {
+        if (activeTab !== "likes") return;
+
+        getToken().then((token) => {
+            dispatch(fetchLikedPosts(token));
+        });
+    }, [activeTab, dispatch, getToken]);
 
     if (loading || !user) return <Loading />
 
@@ -118,6 +132,21 @@ const CurrentProfile = () => {
                         ) : (
                             <p className="text-center text-slate-500 w-full">
                                 There are no posts with images yet.
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* LIKES */}
+                {activeTab === "likes" && (
+                    <div className="mt-6 flex flex-col items-center gap-6">
+                        {likedPosts.length > 0 ? (
+                            likedPosts.map((post) => (
+                                <PostCard key={post._id} post={post} />
+                            ))
+                        ) : (
+                            <p className="text-center text-slate-500 w-full">
+                                There are no liked posts yet.
                             </p>
                         )}
                     </div>
