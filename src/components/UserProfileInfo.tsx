@@ -46,10 +46,9 @@ type ProfileProps = {
   }[];
 
   setShowEdit: React.Dispatch<React.SetStateAction<boolean>>;
-  profileId?: string;
 };
 
-const UserProfileInfo = ({ user, posts, setShowEdit, profileId }: ProfileProps) => {
+const UserProfileInfo = ({ user, posts, setShowEdit }: ProfileProps) => {
 
   const currentUser = useSelector((state: RootState) => state.user.value);
   console.log(currentUser);
