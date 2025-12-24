@@ -35,7 +35,7 @@ const Profile = () => {
     useEffect(() => {
         if (!isOwnProfile) return;
         if (activeTab !== "likes") return;
-
+    
         getToken().then((token) => {
             dispatch(fetchLikedPosts(token));
         });
