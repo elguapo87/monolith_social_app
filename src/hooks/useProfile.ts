@@ -43,7 +43,5 @@ export function useProfile(profileId: string) {
         [posts, profileId]
     );
 
-    console.log(profileUser);
-
     return { user: profileUser, posts: profilePosts, loading: postsLoading, fetchUser }
 }
