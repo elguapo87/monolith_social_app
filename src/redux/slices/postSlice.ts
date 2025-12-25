@@ -290,17 +290,17 @@ const postSlice = createSlice({
                 state.loading = false;
                 toast.error((action.payload as string) || "Failed to delete post");
             })
-            .addCase(fetchLikedPosts.pending, (state) => {
-                state.loading = true;
-            })
+            // .addCase(fetchLikedPosts.pending, (state) => {
+            //     state.loading = true;
+            // })
             .addCase(fetchLikedPosts.fulfilled, (state, action) => {
                 state.loading = false;
                 state.likedPosts = action.payload;
             })
-            .addCase(fetchLikedPosts.rejected, (state, action) => {
-                state.loading = false;
-                toast.error((action.payload as string) || "Failed to fetch liked posts");
-            })
+            // .addCase(fetchLikedPosts.rejected, (state, action) => {
+            //     state.loading = false;
+            //     toast.error((action.payload as string) || "Failed to fetch liked posts");
+            // })
     }
 });
 

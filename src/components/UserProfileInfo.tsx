@@ -51,9 +51,7 @@ type ProfileProps = {
 const UserProfileInfo = ({ user, posts, setShowEdit }: ProfileProps) => {
 
   const currentUser = useSelector((state: RootState) => state.user.value);
-  console.log(currentUser);
-  
-
+ 
   return (
     <div className="relative py-4 px-6 md:px-8 bg-white">
       <div className="flex flex-col md:flex-row items-start gap-6">
