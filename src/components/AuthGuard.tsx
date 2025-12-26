@@ -12,7 +12,6 @@ import { addOrUpdateNotification } from "@/redux/slices/notificationSlice";
 import api from "@/lib/axios";
 import { addPendingConnection } from "@/redux/slices/connectionSlice";
 
-
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const { isLoaded, user } = useUser();
     const { getToken } = useAuth();
