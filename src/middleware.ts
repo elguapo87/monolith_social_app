@@ -9,6 +9,17 @@
 //   ],
 // };
 
+// import { clerkMiddleware } from '@clerk/nextjs/server';
+
+// export default clerkMiddleware();
+
+// export const config = {
+//   matcher: [
+//     // Apply Clerk to everything EXCEPT /api/sse/*
+//     '/((?!api\/sse).*)',
+//   ],
+// };
+
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isPublicRoute = createRouteMatcher([
@@ -28,5 +39,7 @@ export const config = {
     "/((?!_next|.*\\..*).*)",
   ],
 };
+
+
 
 
