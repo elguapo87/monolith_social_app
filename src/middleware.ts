@@ -16,9 +16,12 @@ export default clerkMiddleware();
 export const config = {
   matcher: [
     /*
-      Only run Clerk middleware on pages & app routes,
-      NEVER on API routes
-    */
-    "/((?!api).*)",
+     * Match all request paths except:
+     * - _next (static files)
+     * - api routes (webhooks, inngest, sse)
+     * - static files
+     */
+    "/((?!_next|api|.*\\..*).*)",
   ],
 };
+
