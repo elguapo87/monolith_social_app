@@ -7,8 +7,7 @@ import { sendNewConnectionRequestReminder } from "@/inngest/functions/connection
 import { deleteStory } from "@/inngest/functions/deleteStory";
 import { sendNotificationOfUnseenMessages } from "@/inngest/functions/unseenMessagesNotification";
 
-console.log("SERVER ENV - URL:", process.env.INNGEST_URL);
-console.log("SERVER ENV - KEY:", process.env.INNGEST_EVENT_KEY);
+export const runtime = "nodejs";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
