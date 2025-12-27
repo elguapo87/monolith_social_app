@@ -15,7 +15,10 @@ export default clerkMiddleware();
 
 export const config = {
   matcher: [
-    // Exclude SSE and Clerk webhooks
-    "/((?!api/sse|api/webhooks/clerk).*)",
+    /*
+      Only run Clerk middleware on pages & app routes,
+      NEVER on API routes
+    */
+    "/((?!api).*)",
   ],
 };
