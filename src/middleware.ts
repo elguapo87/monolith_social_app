@@ -9,19 +9,24 @@
 //   ],
 // };
 
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+const isPublicRoute = createRouteMatcher([
+  "/api/webhooks/clerk(.*)",
+  "/api/inngest(.*)",
+  "/api/sse(.*)",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+]);
+
+export default clerkMiddleware((auth, req) => {
+  if (isPublicRoute(req)) return;
+});
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next (static files)
-     * - api routes (webhooks, inngest, sse)
-     * - static files
-     */
-    "/((?!_next|api|.*\\..*).*)",
+    "/((?!_next|.*\\..*).*)",
   ],
 };
+
 
