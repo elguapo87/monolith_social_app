@@ -1,8 +1,8 @@
+export const runtime = "nodejs";
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { inngest } from "@/inngest/client";
 
-export const runtime = "nodejs";
 
 interface ClerkUser {
   id: string;
