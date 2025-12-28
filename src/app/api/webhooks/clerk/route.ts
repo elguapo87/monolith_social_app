@@ -20,8 +20,8 @@ type ClerkEvent = {
     // Add more fields here if needed
 };
 
-
 export async function POST(req: Request) {
+    console.log("🔥 WEBHOOK HIT");
     const payload = await req.text();
     const heads = headers();
 
