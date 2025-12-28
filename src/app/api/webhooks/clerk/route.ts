@@ -3,6 +3,7 @@ import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { inngest } from "@/inngest/client";
 
+console.log("🔥 WEBHOOK HIT");
 
 interface ClerkUser {
   id: string;
@@ -20,8 +21,8 @@ type ClerkEvent = {
     // Add more fields here if needed
 };
 
+
 export async function POST(req: Request) {
-    console.log("🔥 WEBHOOK HIT");
     const payload = await req.text();
     const heads = headers();
 
