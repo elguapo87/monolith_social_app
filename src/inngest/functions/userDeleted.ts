@@ -1,5 +1,7 @@
 import connectDB from "@/config/db";
 import { inngest } from "@/inngest/client";
+import connectionModel from "@/models/connectionModel";
+import messageModel from "@/models/messageModel";
 import userModel from "@/models/userModel";
 
 // 🧱 Handle Clerk "user.deleted" webhook event
@@ -24,6 +26,40 @@ export const handleClerkUserDeleted = inngest.createFunction(
       } else {
         console.log(`⚠️ No user found for Clerk ID: ${clerkUserId}`);
       }
+    });
+
+    // 4️⃣ Remove user from other users’ arrays
+    await step.run("cleanup-user-references", async () => {
+      await userModel.updateMany(
+        {},
+        {
+          $pull: {
+            connections: clerkUserId,
+            followers: clerkUserId,
+            following: clerkUserId
+          }
+        }
+      );
+    });
+
+    // 5️⃣ Delete all connections involving this user
+    await step.run("delete-user-connections", async () => {
+      await connectionModel.deleteMany({
+        $or: [
+          { from_user_id: clerkUserId },
+          { to_user_id: clerkUserId }
+        ]
+      });
+    });
+
+    // 6️⃣ Delete all messages involving this user
+    await step.run("delete-user-messages", async () => {
+      await messageModel.deleteMany({
+        $or: [
+          { from_user_id: clerkUserId },
+          { to_user_id: clerkUserId }
+        ]
+      });
     });
 
     return { success: true, clerkUserId };

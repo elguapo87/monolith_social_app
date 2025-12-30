@@ -39,5 +39,4 @@ export async function POST(req: Request) {
         const errMessage = error instanceof Error ? error.message : "Unknown error";
         return NextResponse.json({ success: false, message: errMessage });
     }
-
 }
