@@ -1,5 +1,6 @@
 import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
+import messageModel from "@/models/messageModel";
 import userModel from "@/models/userModel";
 import { NextResponse } from "next/server";
 
@@ -20,6 +21,14 @@ export async function POST(req: Request) {
         // Remove each other from connections array
         await userModel.updateOne({ _id: from_user_id }, { $pull: { connections: to_user_id } });
         await userModel.updateOne({ _id: to_user_id }, { $pull: { connections: from_user_id } });
+
+        // DELETE ALL MESSAGES BETWEEN THESE USERS
+        await messageModel.deleteMany({
+            $or: [
+                { from_user_id, to_user_id },
+                { from_user_id: to_user_id, to_user_id: from_user_id }
+            ]
+        });
 
         // Delete connection document
         await connection.deleteOne();
