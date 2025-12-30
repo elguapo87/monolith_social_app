@@ -12,7 +12,8 @@ const Login = () => {
         <Image
           src={assets.bgImage}
           alt="Backgorund"
-          className="absolute top-0 left-0 -z-1 w-full h-full object-cover"
+          fill
+          className="absolute top-0 left-0 z-[-1] w-full h-full object-cover"
         />
 
         {/* LEFT SIDE: BRANDING */}
