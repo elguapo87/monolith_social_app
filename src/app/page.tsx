@@ -11,7 +11,7 @@ const Login = () => {
       <div className="min-h-screen flex flex-col md:flex-row">
         <Image
           src={assets.bgImage}
-          alt="Backgorund"
+          alt="Background"
           fill
           className="absolute top-0 left-0 z-[-1] w-full h-full object-cover"
         />
