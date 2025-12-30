@@ -3,7 +3,7 @@ import { protectUser } from "@/middleware/userAuth";
 import messageModel from "@/models/messageModel";
 import userModel from "@/models/userModel";
 import { NextResponse } from "next/server";
-import { sendSSEvent } from "@/sse/bus";
+import { pusherServer } from "@/lib/pusher/server";
 
 export async function POST(req: Request) {
     try {
@@ -76,8 +76,17 @@ export async function POST(req: Request) {
         // Convert to clean plain JSON object
         const messagePayload = JSON.parse(JSON.stringify(message));
 
-        sendSSEvent(to_user_id, "new-message", messagePayload);
-        sendSSEvent(user._id, "new-message", messagePayload);
+        await pusherServer.trigger(
+            `user-${to_user_id}`,
+            "new-message",
+            messagePayload
+        );
+
+        await pusherServer.trigger(
+            `user-${user._id}`,
+            "new-message",
+            messagePayload
+        );
 
         // Build notification payload
         const notificationPayload = {
@@ -94,7 +103,11 @@ export async function POST(req: Request) {
         };
 
         // Send notification to receiver
-        sendSSEvent(to_user_id, "new-notification", notificationPayload);
+        await pusherServer.trigger(
+            `user-${to_user_id}`,
+            "new-notification",
+            notificationPayload
+        );
 
         return NextResponse.json({ success: true, message: messagePayload });
 

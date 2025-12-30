@@ -2,7 +2,7 @@ import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
 import { NextResponse } from "next/server";
 import { sendInngestEvent } from "@/lib/inngestHttpSender";
-import { sendSSEvent } from "@/sse/bus";
+import { pusherServer } from "@/lib/pusher/server";
 
 export async function POST(req: Request) {
     try {
@@ -52,16 +52,10 @@ export async function POST(req: Request) {
 
             } catch (err) {
                 console.error("Failed to send inngest event:", err);
-                // do not fail the whole request just because the background event failed,
-                // but optionally surface to client
-                return NextResponse.json({
-                    success: false,
-                    message: "Connection saved but failed to notify background worker",
-                });
             }
 
-            // SEND REAL-TIME EVENT TO RECEIVER
-            sendSSEvent(id, "connection-request", {
+            // Fire realtime notification (this MUST succeed fast)
+            await pusherServer.trigger(`user-${id}`, "connection-request", {
                 _id: newConnection._id,
                 from_user_id: newConnection.from_user_id,
                 to_user_id: { _id: id },

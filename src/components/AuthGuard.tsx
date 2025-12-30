@@ -8,9 +8,34 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchUser } from "@/redux/slices/userSlice";
 import { addMessage } from "@/redux/slices/messageSlice";
-import { addOrUpdateNotification } from "@/redux/slices/notificationSlice";
+import { addOrUpdateNotification, NotificationItem } from "@/redux/slices/notificationSlice";
 import api from "@/lib/axios";
 import { addPendingConnection } from "@/redux/slices/connectionSlice";
+import { pusherClient } from "@/lib/pusher/client";
+
+type RealtimeUser = {
+    _id: string;
+    full_name: string;
+    profile_picture?: string;
+};
+
+type RealtimeMessage = {
+    _id: string;
+    from_user_id: RealtimeUser;
+    to_user_id: string;
+    text: string;
+    media_url?: string | null;
+    message_type: "text" | "image";
+    createdAt: string;
+};
+
+type RealtimeConnectionRequest = {
+    _id: string;
+    from_user_id: RealtimeUser;
+    to_user_id: { _id: string };
+    status: "pending" | "accepted" | "rejected";
+    createdAt: string;
+};
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const { isLoaded, user } = useUser();
@@ -44,49 +69,36 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!userState?._id) return;
 
-        // getToken().then((token: string | null) => {
-        //     if (token) {
-        //         dispatch(fetchConnections(token));
-        //     }
-        // })
+        const channelName = `user-${userState._id}`;
+        const channel = pusherClient.subscribe(channelName);
 
-        const eventSource = new EventSource(`/api/sse/${userState._id}`);
-
-        eventSource.addEventListener("new-message", async (event) => {
-            const message = JSON.parse(event.data);
-
-            const isOnChatPage =
-                pathnameRef.current === `/auth/chatBox/${message.from_user_id._id}`;
+        channel.bind("new-message", async (message: RealtimeMessage) => {
+            const isOnChatPage = pathnameRef.current === `/auth/chatBox/${message.from_user_id._id}`;
 
             if (isOnChatPage) {
                 dispatch(addMessage(message));
 
-                // Mark as seen in database
                 const token = await getToken();
-                const { data } = await api.post("/message/markAsSeen", { from_user_id: message.from_user_id._id }, {
+                await api.post("/message/markAsSeen", { from_user_id: message.from_user_id._id }, {
                     headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (data.success) {
-                    return data;
-                }
+                })
             }
         });
 
-        eventSource.addEventListener("new-notification", (event) => {
-            const data = JSON.parse(event.data);
-
+        channel.bind("new-notification", (data: NotificationItem) => {
             dispatch(addOrUpdateNotification(data));
         });
 
-        eventSource.addEventListener("connection-request", (event) => {
-            const payload = JSON.parse(event.data);
+        channel.bind("connection-request", (payload: RealtimeConnectionRequest) => {
             dispatch(addPendingConnection(payload));
         });
 
-        return () => eventSource.close();
+        return () => {
+            channel.unbind_all();
+            pusherClient.unsubscribe(channelName);
+        };
 
-    }, [userState?._id, dispatch]);
+    }, [userState?._id, dispatch, getToken]);
 
 
     if (!isLoaded) {

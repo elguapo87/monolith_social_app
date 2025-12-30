@@ -19,6 +19,8 @@
     "mongoose": "^8.19.3",
     "next": "^16.0.8",
     "nodemailer": "^7.0.10",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.6.0",
