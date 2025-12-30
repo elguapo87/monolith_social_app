@@ -83,9 +83,17 @@ export async function POST(req: Request) {
         //     data: { storyId:  story._id.toString()}
         // })
 
-        await sendInngestEvent("app/story-delete", {
-            data: { storyId:  story._id.toString() }
-        })
+        // await sendInngestEvent("app/story-delete", {
+        //     data: { storyId:  story._id.toString() }
+        // })
+
+        try {
+            await sendInngestEvent("app/story-delete", {
+                data: { storyId: story._id.toString() }
+            })
+        } catch (err) {
+            console.error("Failed to schedule story deletion:", err);
+        }
 
         return NextResponse.json({
             success: true,
