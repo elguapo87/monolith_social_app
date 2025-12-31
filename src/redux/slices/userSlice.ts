@@ -190,7 +190,13 @@ const userSlice = createSlice({
             })
             .addCase(updateProfile.fulfilled, (state, action) => {
                 state.loading = false;
-                state.value = action.payload!;
+                // state.value = action.payload!;
+                if (state.value) {
+                    state.value = {
+                        ...state.value,        
+                        ...action.payload      
+                    };
+                }
             })
             .addCase(updateProfile.rejected, (state) => {
                 state.loading = false;
@@ -263,7 +269,7 @@ const userSlice = createSlice({
                         state.profileData.followers = state.profileData.followers.filter((id) => id !== currentUserId);
                     }
                 }
-                
+
                 state.loading = true;
             })
             .addCase(unfollowUser.fulfilled, (state, action) => {
@@ -285,7 +291,7 @@ const userSlice = createSlice({
                 if (state.profileData && state.profileData._id === targetUserId) {
                     if (!state.profileData.followers?.includes(currentUserId)) {
                         state.profileData.followers?.push(currentUserId);
-                    } 
+                    }
                 }
 
                 state.loading = false;

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { assets } from "../../public/assets";
 import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import { updateProfile } from "@/redux/slices/userSlice";
+import { fetchUser, updateProfile } from "@/redux/slices/userSlice";
 import toast from "react-hot-toast";
 
 type ProfileProps = {
