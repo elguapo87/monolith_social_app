@@ -47,12 +47,8 @@ const CreatePost = () => {
             });
 
             if (data.success) {
-                toast.success(data.message, { duration: 3000 });
                 router.push("/");
-
-                setTimeout(() => {
-                    toast.dismiss();
-                }, 3100);
+                toast.success(data.message);
 
             } else {
                 toast.error(data.message);
