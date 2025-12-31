@@ -190,7 +190,6 @@ const userSlice = createSlice({
             })
             .addCase(updateProfile.fulfilled, (state, action) => {
                 state.loading = false;
-                // state.value = action.payload!;
                 if (state.value) {
                     state.value = {
                         ...state.value,        
