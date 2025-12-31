@@ -1,4 +1,5 @@
 import imageKit from "@/config/imageKit";
+import { inngest } from "@/inngest/client";
 import { sendInngestEvent } from "@/lib/inngestHttpSender";
 import { protectUser } from "@/middleware/userAuth";
 import storyModel from "@/models/storyModel";
@@ -88,9 +89,17 @@ export async function POST(req: Request) {
         // })
 
         try {
-            await sendInngestEvent("app/story-delete", {
-                data: { storyId: story._id.toString() }
-            })
+            // await sendInngestEvent("app/story-delete", {
+            //     data: { storyId: story._id.toString() }
+            // })
+
+            await inngest.send({
+                name: "app/story-delete",
+                data: {
+                    storyId: story._id.toString(),
+                },
+            });
+
         } catch (err) {
             console.error("Failed to schedule story deletion:", err);
         }
