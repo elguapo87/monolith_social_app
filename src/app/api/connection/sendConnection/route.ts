@@ -3,6 +3,7 @@ import connectionModel from "@/models/connectionModel";
 import { NextResponse } from "next/server";
 import { sendInngestEvent } from "@/lib/inngestHttpSender";
 import { pusherServer } from "@/lib/pusher/server";
+import { inngest } from "@/inngest/client";
 
 export async function POST(req: Request) {
     try {
@@ -46,8 +47,15 @@ export async function POST(req: Request) {
                 );
 
             try {
-                await sendInngestEvent("app/connection-request", {
-                    data: { connectionId: newConnection._id.toString() }
+                // await sendInngestEvent("app/connection-request", {
+                //     data: { connectionId: newConnection._id.toString() }
+                // });
+
+                await inngest.send({
+                    name: "app/connection-request",
+                    data: {
+                        connectionId: newConnection._id.toString()
+                    }
                 });
 
             } catch (err) {
