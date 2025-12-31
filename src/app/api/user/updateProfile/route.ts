@@ -34,30 +34,9 @@ export async function POST(req: Request) {
             user_name = tempUser.user_name;
         }
 
-        let profile_picture = tempUser.profile_picture;
         let cover_photo = tempUser.cover_photo;
 
-        const profileFile = form.get("profile") as File | null;
         const coverFile = form.get("cover") as File | null;
-
-        if (profileFile && profileFile.size > 0) {
-            const bytes = await profileFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            const uploadResponse = await imageKit.upload({
-                file: buffer,
-                fileName: `profile_${user._id}_${Date.now()}.jpg`,
-                folder: "/monolith/profiles"
-            });
-
-            profile_picture = imageKit.url({
-                src: uploadResponse.url,
-                transformation: [
-                    { quality: "auto" },
-                    { format: "webp" },
-                    { width: "512" }
-                ]
-            })
-        }
 
         if (coverFile && coverFile.size > 0) {
             const bytes = await coverFile.arrayBuffer();
@@ -83,7 +62,7 @@ export async function POST(req: Request) {
             user_name,
             bio: bio || tempUser.bio,
             location: location || tempUser.location,
-            profile_picture,
+            // profile_picture,
             cover_photo
         };
 

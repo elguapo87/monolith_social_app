@@ -15,7 +15,7 @@ type ProfileProps = {
 
 const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
 
-    const user = useSelector((state: RootState) => state.user.value);
+    const { value: user, loading } = useSelector((state: RootState) => state.user);
     const { getToken } = useAuth();
     const dispatch = useDispatch<AppDispatch>();
 
@@ -23,14 +23,12 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
         user_name: string;
         bio: string;
         location: string;
-        profile_picture: File | null;
         cover_photo: File | null;
         full_name: string;
     }>({
         user_name: user?.user_name ?? "",
         bio: user?.bio ?? "",
         location: user?.location ?? "",
-        profile_picture: null,
         cover_photo: null,
         full_name: user?.full_name ?? ""
     });
@@ -46,7 +44,6 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
         formData.append("location", editForm.location);
         formData.append("bio", editForm.bio);
 
-        editForm.profile_picture && formData.append("profile", editForm.profile_picture);
         editForm.cover_photo && formData.append("cover", editForm.cover_photo);
 
         try {
@@ -61,14 +58,7 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
 
     };
 
-    const previewProfilePicture = 
-        editForm.profile_picture
-            ? URL.createObjectURL(editForm.profile_picture)
-            : user?.profile_picture
-                ? user.profile_picture
-                : assets.avatar_icon
-
-    const previewCoverPhoto = 
+    const previewCoverPhoto =
         editForm.cover_photo
             ? URL.createObjectURL(editForm.cover_photo)
             : user?.cover_photo
@@ -82,40 +72,23 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
                     <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
 
                     <form onSubmit={handleSaveProfile} className="space-y-4">
-                        {/* PROFILE PICTURE */}
+                        {/* PROFILE PICTURE (Clerk-managed) */}
                         <div className="flex flex-col items-start gap-3">
-                            <label
-                                htmlFor="profile_picture"
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                            >
+                            <span className="block text-sm font-medium text-gray-700">
                                 Profile Picture
-                                <input
-                                    onChange={(e) => setEditForm((prev) => ({
-                                        ...prev, profile_picture: e.target.files && e.target.files[0]
-                                    }))}
-                                    type="file"
-                                    accept="image/*"
-                                    hidden
-                                    id="profile_picture"
-                                />
+                            </span>
 
-                                <div className="group/profile relative">
-                                    <Image
-                                        src={previewProfilePicture}
-                                        alt=""
-                                        width={96}
-                                        height={96}
-                                        className="size-24 rounded-full object-cover mt-2"
-                                    />
-                                </div>
+                            <Image
+                                src={user?.profile_picture || assets.avatar_icon}
+                                alt="Profile picture"
+                                width={96}
+                                height={96}
+                                className="size-24 rounded-full object-cover mt-2 opacity-80 cursor-not-allowed"
+                            />
 
-                                <div
-                                    className="absolute hidden group-hover/profile:flex top-0 left-0 right-0
-                                        bottom-0 bg-black/20 rounded-full items-center justify-center"
-                                >
-                                    <Pencil className="w-5 h-5 text-white" />
-                                </div>
-                            </label>
+                            <p className="text-xs text-gray-500 max-w-xs">
+                                Profile picture is managed via account settings.
+                            </p>
                         </div>
 
                         {/* COVER PHOTO */}
@@ -216,11 +189,12 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
                             </button>
                             <button
                                 type="submit"
+                                disabled={loading}
                                 className="px-4 py-2 bg-linear-to-r from-indigo-500 to-purple-600
                                  text-white rounded-lg hover:from-indigo-600 hover:to-purple-700
                                   transition cursor-pointer"
                             >
-                                Save Changes
+                                {loading ? "Saving..." : "Save Changes"}
                             </button>
                         </div>
                     </form>
