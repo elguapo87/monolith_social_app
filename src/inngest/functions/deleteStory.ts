@@ -1,5 +1,6 @@
 import storyModel from "@/models/storyModel";
 import { inngest } from "../client";
+import connectDB from "@/config/db";
 
 export const deleteStory = inngest.createFunction(
     { id: "story-delete" },
@@ -9,6 +10,9 @@ export const deleteStory = inngest.createFunction(
         const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await step.sleepUntil("wait-for-24-hours", in24Hours);
         await step.run("delete-story", async () => {
+
+            await connectDB();
+
             await storyModel.findByIdAndDelete(storyId);
             return { message: "Story deleted." }; 
         })
