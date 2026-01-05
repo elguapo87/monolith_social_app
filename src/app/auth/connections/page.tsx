@@ -217,40 +217,25 @@ const Connections = () => {
                                 className="w-full max-w-88 flex gap-5 p-6 bg-white shadow rounded-md"
                             >
                                 <Image
+                                    onClick={() => router.push(`/auth/profile/${user?._id}`)}
                                     src={user?.profile_picture || assets.avatar_icon}
                                     alt=''
                                     width={48}
                                     height={48}
-                                    className="rounded-full size-12 shadow-md mx-auto"
+                                    className="rounded-full size-12 shadow-md mx-auto cursor-pointer"
                                 />
 
                                 <div className="flex-1">
-                                    <p className="font-medium text-slate-700">{user?.full_name}</p>
-                                    <p className="text-slate-500">@{user?.user_name}</p>
-                                    <p className="text-sm text-slate-600">{user?.bio && user.bio.slice(0, 30)}...</p>
+                                    <div  
+                                        className='cursor-pointer'
+                                        onClick={() => router.push(`/auth/profile/${user?._id}`)}
+                                    >
+                                        <p className="font-medium text-slate-700">{user?.full_name}</p>
+                                        <p className="text-slate-500">@{user?.user_name}</p>
+                                        <p className="text-sm text-slate-600">{user?.bio && user.bio.slice(0, 30)}...</p>
+                                    </div>
 
                                     <div className="flex max-sm:flex-col gap-2 mt-4">
-                                        <div className='relative group flex justify-center items-center'>
-                                            <button
-                                                onClick={() => router.push(`/auth/profile/${user?._id}`)}
-                                                className="p-3 text-sm rounded bg-linear-to-r
-                                            from-indigo-500 to-purple-600 hover:from-indigo-600
-                                            hover:to-purple-700 active:scale-95 transition
-                                            text-white cursor-pointer"
-                                            >
-                                                <Eye className="w-5 h-5" />
-                                            </button>
-
-                                            {/* Tooltip */}
-                                            <div
-                                                className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
-                                                            rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
-                                                            opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                View this profile
-                                            </div>
-                                        </div>
-
                                         {currentTab === "Followers" && (
                                             <>
                                                 {!currentUser?.following?.includes(user._id) && (
