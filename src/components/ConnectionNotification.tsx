@@ -19,7 +19,7 @@ const ConnectionNotification = () => {
 
     return pendingConnections.length > 0 && (
         <span
-            className='absolute top-25 right-26 min-w-[18px] h-[18px] text-xs
+            className='absolute top-25 right-14 md:right-26 min-w-4.5 h-4.5 text-xs
                 bg-red-500 text-white rounded-full flex items-center justify-center'
         >
             {pendingConnections.length}
