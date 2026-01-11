@@ -214,7 +214,7 @@ const Connections = () => {
                         return (
                             <div
                                 key={user?._id}
-                                className="w-full max-w-88 flex gap-5 p-6 bg-white shadow rounded-md"
+                                className="md:w-full max-w-88 flex gap-2 md:gap-5 p-6 bg-white shadow rounded-md"
                             >
                                 <Image
                                     onClick={() => router.push(`/auth/profile/${user?._id}`)}
@@ -237,11 +237,11 @@ const Connections = () => {
 
                                     <div className="flex max-sm:flex-col gap-2 mt-4">
                                         {currentTab === "Followers" && (
-                                            <>
+                                            <div className='flex items-center gap-2'>
                                                 {!currentUser?.following?.includes(user._id) && (
                                                     <button
                                                         onClick={() => handleFollow(user._id)}
-                                                        className="w-full py-2 rounded flex justify-center items-center
+                                                        className="py-2 px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
                                                             active:scale-95 transition text-white cursor-pointer"
@@ -255,9 +255,9 @@ const Connections = () => {
                                                     <div className='relative group flex justify-center items-center'>
                                                         <button
                                                             onClick={() => handleConnectionRequest(user._id)}
-                                                            className="w-full p-3 text-sm rounded bg-slate-100
-                                                        hover:bg-slate-200 text-slate-500 active:scale-95
-                                                        transition cursor-pointer"
+                                                            className="p-3 text-sm rounded bg-slate-100
+                                                                hover:bg-slate-200 text-slate-500 active:scale-95
+                                                                transition cursor-pointer"
                                                         >
                                                             <Plus className="w-5 h-5 hover:scale-105 transition duration-200" />
                                                         </button>
@@ -274,14 +274,14 @@ const Connections = () => {
                                                     </div>
                                                 )}
 
-                                            </>
+                                            </div>
                                         )}
 
                                         {currentTab === "Following" && (
-                                            <>
+                                            <div className='flex items-center gap-2'>
                                                 <button
                                                     onClick={() => handleUnfollow(user._id)}
-                                                    className="w-full py-2 rounded flex justify-center items-center
+                                                    className="py-2 px-3 rounded flex justify-center items-center
                                                         gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                     hover:from-indigo-600 hover:to-purple-700
                                                         active:scale-95 transition text-white cursor-pointer"
@@ -294,7 +294,7 @@ const Connections = () => {
                                                     <div className='relative group flex justify-center items-center'>
                                                         <button
                                                             onClick={() => handleConnectionRequest(user._id)}
-                                                            className="w-full p-3 text-sm rounded bg-slate-100
+                                                            className="p-3 text-sm rounded bg-slate-100
                                                         hover:bg-slate-200 text-slate-500 active:scale-95
                                                         transition cursor-pointer"
                                                         >
@@ -311,16 +311,16 @@ const Connections = () => {
                                                         </div>
                                                     </div>
                                                 )}
-                                            </>
+                                            </div>
 
                                         )}
 
                                         {currentTab === "Pending" && (
-                                            <>
+                                            <div className='flex items-center gap-2'>
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
                                                         onClick={() => handleCancelRequest(connectionId)}
-                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                        className="py-2.5 px-3 text-sm rounded bg-slate-100
                                                         hover:bg-slate-200 text-red-500 active:scale-95
                                                         transition cursor-pointer"
                                                     >
@@ -340,7 +340,7 @@ const Connections = () => {
                                                 {!currentUser?.following?.includes(user._id) && (
                                                     <button
                                                         onClick={() => handleFollow(user._id)}
-                                                        className="w-full py-2 rounded flex justify-center items-center
+                                                        className="py-2 px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
                                                             active:scale-95 transition text-white cursor-pointer"
@@ -349,17 +349,17 @@ const Connections = () => {
                                                         Follow
                                                     </button>
                                                 )}
-                                            </>
+                                            </div>
                                         )}
 
                                         {currentTab === "Incoming" && (
-                                            <>
+                                            <div className='flex items-center gap-2'>
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
                                                         onClick={() => handleAccept(user._id)}
-                                                        className="w-full p-3 text-sm rounded bg-slate-100
-                                                    hover:bg-slate-200 text-green-500 active:scale-95
-                                                    transition cursor-pointer"
+                                                        className="md:w-full p-3 text-sm rounded bg-slate-100
+                                                            hover:bg-slate-200 text-green-500 active:scale-95
+                                                            transition cursor-pointer"
                                                     >
                                                         <Check className="w-5 h-5 hover:scale-105 transition duration-200" />
                                                     </button>
@@ -377,9 +377,9 @@ const Connections = () => {
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
                                                         onClick={() => handleDecline(user._id)}
-                                                        className="w-full p-3 text-sm rounded bg-slate-100
-                                                    hover:bg-slate-200 text-red-500 active:scale-95
-                                                    transition cursor-pointer"
+                                                        className="md:w-full p-3 text-sm rounded bg-slate-100
+                                                            hover:bg-slate-200 text-red-500 active:scale-95
+                                                            transition cursor-pointer"
                                                     >
                                                         <X className="w-5 h-5 hover:scale-105 transition duration-200" />
                                                     </button>
@@ -393,15 +393,15 @@ const Connections = () => {
                                                         Reject Connection Request
                                                     </div>
                                                 </div>
-                                            </>
+                                            </div>
                                         )}
 
                                         {currentTab === "Connections" && (
-                                            <>
+                                            <div className='flex items-center gap-2'>
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
                                                         onClick={() => router.push(`/auth/chatBox/${user?._id}`)}
-                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                        className="p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-black active:scale-95
                                                             transition cursor-pointer flex items-center justify-center gap-1"
                                                     >
@@ -421,7 +421,7 @@ const Connections = () => {
                                                 {!currentUser?.following?.includes(user._id) && (
                                                     <button
                                                         onClick={() => handleFollow(user._id)}
-                                                        className="w-full py-2 rounded flex justify-center items-center
+                                                        className="w-full py-2.5 md:px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
                                                             active:scale-95 transition text-white cursor-pointer"
@@ -450,7 +450,7 @@ const Connections = () => {
                                                         Remove connection
                                                     </div>
                                                 </div>
-                                            </>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
