@@ -13,7 +13,11 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { id } = body;
 
-        const connection = await connectionModel.findOne({ from_user_id: id, to_user_id: authUser._id });
+        const connection = await connectionModel.findOne({ 
+            from_user_id: id, 
+            to_user_id: authUser._id,
+            status: "pending" 
+        });
         if (!connection) {
             return NextResponse.json({ success: false, message: "Connection not found" });
         }
