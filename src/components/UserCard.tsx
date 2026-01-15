@@ -106,7 +106,7 @@ const UserCard = ({ user }: UserProps) => {
 
                 <p className="mt-4 font-semibold">{user.full_name}</p>
                 {user.user_name && <p className="text-gray-600 font-light">@{user.user_name}</p>}
-                {user.bio && <p className="text-gray-600 mt-2 text-center text-sm px-4">@{user.bio}</p>}
+                {user.bio && <p className="text-gray-600 mt-2 text-center text-sm px-4">{user.bio}</p>}
             </div>
 
             <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-600">
