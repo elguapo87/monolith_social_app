@@ -3,12 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react'
 import { assets } from '../../../../public/assets';
-import { Check, CircleX, Eye, MessageSquare, Plus, UserCheck, UserPlus, UserRoundPen, Users, X } from 'lucide-react';
+import { Check, CircleX, MessageSquare, Plus, UserCheck, UserPlus, UserRoundPen, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/redux/store';
 import { useAuth } from '@clerk/nextjs';
-import { acceptConnectionRequest, cancelConnectionRequest, declineConnectionRequest, deleteConnection, fetchConnections, IUser, PendingData, sendConnection } from '@/redux/slices/connectionSlice';
+import { acceptConnectionRequest, cancelConnectionRequest, declineConnectionRequest, deleteConnection, fetchConnections, sendConnection } from '@/redux/slices/connectionSlice';
 import Loading from '@/components/Loading';
 import { followUser, unfollowUser } from '@/redux/slices/userSlice';
 
@@ -43,58 +43,6 @@ const Connections = () => {
             dispatch(fetchConnections(token));
         });
     }, []);
-
-    const toFullUser = (u: IUser | { _id: string }): IUser => {
-        if ("full_name" in u && "email" in u) {
-            return u; // Already a full IUser
-        }
-
-        // Convert minimal object → safe IUser shape
-        return {
-            _id: u._id,
-            full_name: "Unknown User",
-            email: "unknown@example.com",
-            user_name: "unknown",
-            bio: "",
-            profile_picture: "",
-            followers: [],
-            following: [],
-            connections: []
-        };
-    };
-
-    const normalizeUser = (item: IUser | PendingData, tab: string) => {
-        if (tab === "Pending") {
-            return {
-                user: toFullUser((item as PendingData).to_user_id),
-                connectionId: (item as PendingData)._id,
-                otherUserId: (item as PendingData).to_user_id._id
-            };
-        }
-
-        if (tab === "Incoming") {
-            return {
-                user: toFullUser((item as PendingData).from_user_id),
-                connectionId: (item as PendingData)._id,
-                otherUserId: (item as PendingData).from_user_id._id
-            };
-        }
-
-        if (tab === "Connections") {
-            return {
-                user: toFullUser(item as IUser),
-                connectionId: (item as IUser).connectionId || null,   // FIX
-                otherUserId: (item as IUser)._id
-            };
-        }
-
-        // Followers, following, connections
-        return {
-            user: toFullUser(item as IUser),
-            connectionId: null,
-            otherUserId: (item as IUser)._id
-        }
-    }
 
     const handleFollow = async (targetUserId: string) => {
         const token = await getToken();
@@ -197,28 +145,21 @@ const Connections = () => {
 
                 {/* CONNECTIONS */}
                 <div className="flex flex-wrap gap-6 mt-6">
-                    {dataArray.find((item) => item.label === currentTab)?.value.map((row) => {
-                        const { user, connectionId: normalizedId } = normalizeUser(row, currentTab);
+                    {dataArray.find((item) => item.label === currentTab)?.value.map((user, index) => {
 
-                        let connectionId = normalizedId;
-                        if (currentTab === "Pending") {
-                            const sent = pendingSent.find((u) => u.to_user_id._id === user._id);
-                            if (sent?._id) connectionId = sent._id;
-                        }
-
-                        const isConnected = connections.some((u) => u._id === user._id);
-                        const isPendingSent = pendingSent.some((u) => u.to_user_id._id === user._id);
-                        const isPendingReceived = pendingConnections.some((u) => u.from_user_id._id === user._id);
+                        const isConnected = connections.some((c) => c.user?._id === user?.user?._id);
+                        const isPendingSent = pendingSent.some((c) => c.user?._id === user?.user?._id);
+                        const isPendingReceived = pendingConnections.some((c) => c.user?._id === user?.user?._id);
                         const canSendConnection = !isConnected && !isPendingReceived && !isPendingSent;
 
                         return (
                             <div
-                                key={user?._id}
+                                key={index}
                                 className="md:w-full max-w-88 flex gap-2 md:gap-5 p-6 bg-white shadow rounded-md"
                             >
                                 <Image
-                                    onClick={() => router.push(`/auth/profile/${user?._id}`)}
-                                    src={user?.profile_picture || assets.avatar_icon}
+                                    onClick={() => router.push(`/auth/profile/${user?.user?._id}`)}
+                                    src={user?.user?.profile_picture || assets.avatar_icon}
                                     alt=''
                                     width={48}
                                     height={48}
@@ -226,21 +167,25 @@ const Connections = () => {
                                 />
 
                                 <div className="flex-1">
-                                    <div  
+                                    <div
                                         className='cursor-pointer'
-                                        onClick={() => router.push(`/auth/profile/${user?._id}`)}
+                                        onClick={() => router.push(`/auth/profile/${user?.user?._id}`)}
                                     >
-                                        <p className="font-medium text-slate-700">{user?.full_name}</p>
-                                        <p className="text-slate-500">@{user?.user_name}</p>
-                                        <p className="text-sm text-slate-600">{user?.bio && user.bio.slice(0, 30)}...</p>
+                                        <p className="font-medium text-slate-700">{user?.user?.full_name}</p>
+                                        <p className="text-slate-500">@{user?.user?.user_name}</p>
+                                        <p
+                                            className="text-sm text-slate-600"
+                                        >
+                                            {user?.user?.bio && user?.user?.bio.slice(0, 30)}...
+                                        </p>
                                     </div>
 
                                     <div className="flex max-sm:flex-col gap-2 mt-4">
                                         {currentTab === "Followers" && (
                                             <div className='flex items-center gap-2'>
-                                                {!currentUser?.following?.includes(user._id) && (
+                                                {!currentUser?.following?.includes(user?.user?._id) && (
                                                     <button
-                                                        onClick={() => handleFollow(user._id)}
+                                                        onClick={() => handleFollow(user?.user?._id)}
                                                         className="py-2 px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
@@ -254,7 +199,7 @@ const Connections = () => {
                                                 {canSendConnection && (
                                                     <div className='relative group flex justify-center items-center'>
                                                         <button
-                                                            onClick={() => handleConnectionRequest(user._id)}
+                                                            onClick={() => handleConnectionRequest(user?.user?._id)}
                                                             className="p-3 text-sm rounded bg-slate-100
                                                                 hover:bg-slate-200 text-slate-500 active:scale-95
                                                                 transition cursor-pointer"
@@ -280,7 +225,7 @@ const Connections = () => {
                                         {currentTab === "Following" && (
                                             <div className='flex items-center gap-2'>
                                                 <button
-                                                    onClick={() => handleUnfollow(user._id)}
+                                                    onClick={() => handleUnfollow(user?.user?._id)}
                                                     className="py-2 px-3 rounded flex justify-center items-center
                                                         gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                     hover:from-indigo-600 hover:to-purple-700
@@ -293,7 +238,7 @@ const Connections = () => {
                                                 {canSendConnection && (
                                                     <div className='relative group flex justify-center items-center'>
                                                         <button
-                                                            onClick={() => handleConnectionRequest(user._id)}
+                                                            onClick={() => handleConnectionRequest(user?.user?._id)}
                                                             className="p-3 text-sm rounded bg-slate-100
                                                         hover:bg-slate-200 text-slate-500 active:scale-95
                                                         transition cursor-pointer"
@@ -304,22 +249,26 @@ const Connections = () => {
                                                         {/* Tooltip */}
                                                         <div
                                                             className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 
-                                                                rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
-                                                                opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                rounded-md bg-gray-800 text-white text-xs
+                                                                whitespace-nowrap opacity-0 group-hover:opacity-100
+                                                                transition-opacity"
                                                         >
                                                             Send Connection Request
                                                         </div>
                                                     </div>
                                                 )}
                                             </div>
-
                                         )}
 
                                         {currentTab === "Pending" && (
                                             <div className='flex items-center gap-2'>
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
-                                                        onClick={() => handleCancelRequest(connectionId)}
+                                                        onClick={() => {
+                                                            if (user?.connectionId) {
+                                                                handleCancelRequest(user?.connectionId)
+                                                            }
+                                                        }}
                                                         className="py-2.5 px-3 text-sm rounded bg-slate-100
                                                         hover:bg-slate-200 text-red-500 active:scale-95
                                                         transition cursor-pointer"
@@ -337,9 +286,9 @@ const Connections = () => {
                                                     </div>
                                                 </div>
 
-                                                {!currentUser?.following?.includes(user._id) && (
+                                                {!currentUser?.following?.includes(user?.user?._id) && (
                                                     <button
-                                                        onClick={() => handleFollow(user._id)}
+                                                        onClick={() => handleFollow(user?.user?._id)}
                                                         className="py-2 px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
@@ -356,7 +305,7 @@ const Connections = () => {
                                             <div className='flex items-center gap-2'>
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
-                                                        onClick={() => handleAccept(user._id)}
+                                                        onClick={() => handleAccept(user?.user?._id)}
                                                         className="md:w-full p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-green-500 active:scale-95
                                                             transition cursor-pointer"
@@ -376,7 +325,7 @@ const Connections = () => {
 
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
-                                                        onClick={() => handleDecline(user._id)}
+                                                        onClick={() => handleDecline(user?.user?._id)}
                                                         className="md:w-full p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-red-500 active:scale-95
                                                             transition cursor-pointer"
@@ -400,7 +349,7 @@ const Connections = () => {
                                             <div className='flex items-center gap-2'>
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
-                                                        onClick={() => router.push(`/auth/chatBox/${user?._id}`)}
+                                                        onClick={() => router.push(`/auth/chatBox/${user?.user?._id}`)}
                                                         className="p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-black active:scale-95
                                                             transition cursor-pointer flex items-center justify-center gap-1"
@@ -418,9 +367,9 @@ const Connections = () => {
                                                     </div>
                                                 </div>
 
-                                                {!currentUser?.following?.includes(user._id) && (
+                                                {!currentUser?.following?.includes(user?.user?._id) && (
                                                     <button
-                                                        onClick={() => handleFollow(user._id)}
+                                                        onClick={() => handleFollow(user?.user?._id)}
                                                         className="w-full py-2.5 md:px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
@@ -433,7 +382,11 @@ const Connections = () => {
 
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
-                                                        onClick={() => handleDelete(connectionId)}
+                                                        onClick={() => {
+                                                            if (user?.connectionId) {
+                                                                handleDelete(user?.connectionId)
+                                                            }
+                                                        }}
                                                         className="w-full p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-red-500 active:scale-95
                                                             transition cursor-pointer flex items-center justify-center gap-1"

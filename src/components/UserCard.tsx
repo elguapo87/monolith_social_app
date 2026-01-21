@@ -6,25 +6,17 @@ import { useAuth } from "@clerk/nextjs";
 import { followUser, unfollowUser } from "@/redux/slices/userSlice";
 import { acceptConnectionRequest, cancelConnectionRequest, declineConnectionRequest, fetchConnections, sendConnection } from "@/redux/slices/connectionSlice";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type UserProps = {
     user: {
         _id: string;
-        email: string;
         full_name: string;
         user_name: string;
         bio: string;
         profile_picture: string;
-        cover_photo: string;
         location: string;
         followers: string[];
-        following: string[];
-        connections: string[];
-        posts: never[];
-        is_verified: boolean;
-        createdAt: string;
-        updatedAt: string;
     };
 };
 
@@ -35,52 +27,13 @@ const UserCard = ({ user }: UserProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
 
+    const [followLoading, setFollowLoading] = useState(false);
+    const [sendLoading, setSendLoading] = useState(false);
+    const [cancelLoading, setCancelLoading] = useState(false);
+    const [acceptLoading, setAcceptLoading] = useState(false);
+    const [declineLoading, setDeclineLoading] = useState(false);
+
     const router = useRouter();
-
-    const toggleFollow = async () => {
-        const token = await getToken();
-        const isFollowing = currentUser?.following?.includes(user._id);
-
-        if (isFollowing) {
-            dispatch(unfollowUser({ targetUserId: user._id, token }));
-        } else {
-            dispatch(followUser({ targetUserId: user._id, token }));
-        }
-    };
-
-    const handleConnectionRequest = async () => {
-        const token = await getToken();
-        await dispatch(sendConnection({ id: user._id, token }));
-        dispatch(fetchConnections(token));
-    };
-
-    const isPendingSent = pendingSent.some((u) => u.to_user_id._id === user._id);
-    const isPendingReceived = pendingConnections.some((u) => u.from_user_id._id === user._id);
-    const isConnected = connections.some((u) => u._id === user._id);
-
-    const connectionSent = pendingSent.find((u) => u.to_user_id._id === user._id);
-    const connectionId = connectionSent?._id;
-
-    const handleCancelRequest = async () => {
-        if (!connectionId) return;
-
-        const token = await getToken();
-
-        await dispatch(cancelConnectionRequest({ connectionId, token }));
-        dispatch(fetchConnections(token));
-    };
-
-    const handleAccept = async () => {
-        const token = await getToken();
-        await dispatch(acceptConnectionRequest({ id: user._id, token }));
-        dispatch(fetchConnections(token));
-    };
-
-    const handleDecline = async () => {
-        const token = await getToken();
-        await dispatch(declineConnectionRequest({ id: user._id, token }));
-        dispatch(fetchConnections(token));
-    };
 
     useEffect(() => {
         const getConnections = async () => {
@@ -89,6 +42,85 @@ const UserCard = ({ user }: UserProps) => {
         }
         getConnections();
     }, []);
+
+    const toggleFollow = async () => {
+        if (followLoading) return;
+
+        setFollowLoading(true);
+
+        try {
+            const token = await getToken();
+            const isFollowing = currentUser?.following?.includes(user._id);
+
+            if (isFollowing) {
+                dispatch(unfollowUser({ targetUserId: user._id, token }));
+            } else {
+                dispatch(followUser({ targetUserId: user._id, token }));
+            }
+        } finally {
+            setFollowLoading(false);
+        }
+    };
+
+    const handleConnectionRequest = async () => {
+        if (sendLoading) return;
+        setSendLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(sendConnection({ id: user._id, token })).unwrap();
+            await dispatch(fetchConnections(token));
+
+        } finally {
+            setSendLoading(false);
+        }
+    };
+
+    const isPendingSent = pendingSent.some((u) => u.user?._id === user._id);
+    const isPendingReceived = pendingConnections.some((u) => u.user?._id === user._id);
+    const isConnected = connections.some((u) => u.user?._id === user._id);
+
+    const connectionSent = pendingSent.find((u) => u.user?._id === user._id);
+    const connectionId = connectionSent?.connectionId;
+
+    const handleCancelRequest = async () => {
+        if (!connectionId || cancelLoading) return;
+        setCancelLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(cancelConnectionRequest({ connectionId, token })).unwrap();
+            await dispatch(fetchConnections(token));
+        } finally {
+            setCancelLoading(false);
+        }
+    };
+
+    const handleAccept = async () => {
+        if (acceptLoading) return;
+        setAcceptLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(acceptConnectionRequest({ id: user._id, token })).unwrap();
+            await dispatch(fetchConnections(token));
+        } finally {
+            setAcceptLoading(false);
+        }
+    };
+
+    const handleDecline = async () => {
+        if (declineLoading) return;
+        setDeclineLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(declineConnectionRequest({ id: user._id, token })).unwrap();
+            await dispatch(fetchConnections(token));
+        } finally {
+            setDeclineLoading(false);
+        }
+    };
 
     return (
         <div
@@ -124,12 +156,20 @@ const UserCard = ({ user }: UserProps) => {
                 <button
                     onClick={toggleFollow}
                     // disabled={currentUser?.followers?.includes(user._id)}
-                    className="w-full py-2 rounded-md flex justify-center items-center gap-1 bg-linear-to-r
+                    disabled={followLoading}
+                    className={`w-full py-2 rounded-md flex justify-center items-center gap-1 bg-linear-to-r
                         from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700
-                        active:scale-95 transition text-white cursor-pointer"
+                        active:scale-95 transition text-white cursor-pointer 
+                        ${followLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                    <UserPlus className="w-4 h-4" />
-                    {currentUser?.following?.includes(user._id) ? "Following" : "Follow"}
+                    <UserPlus className={`w-4 h-4 ${followLoading ? "animate-spin" : ""}`} />
+                    {followLoading ? (
+                        "Please wait..."
+                    ) : currentUser?.following?.includes(user._id) ? (
+                        "Unfollow"
+                    ) : (
+                        "Follow"
+                    )}
                 </button>
 
                 {/* CHAT BUTTON (only when connected) */}
@@ -145,13 +185,26 @@ const UserCard = ({ user }: UserProps) => {
 
                 {/* SEND CONNECTION BUTTON (not connected, not pending) */}
                 {!isConnected && !isPendingSent && !isPendingReceived && (
-                    <button
-                        onClick={handleConnectionRequest}
-                        className="flex items-center justify-center w-16 border text-slate-500 group rounded-md
-                            cursor-pointer active:scale-95 transition"
-                    >
-                        <Plus className="w-5 h-5 group-hover:scale-105 transition" />
-                    </button>
+                    <div className="relative group flex items-center justify-center">
+                        <button
+                            onClick={handleConnectionRequest}
+                            disabled={sendLoading}
+                            className={`flex items-center justify-center h-full w-13 border text-slate-500 group rounded-md
+                                cursor-pointer active:scale-95 transition 
+                                ${sendLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                            {sendLoading ? "..." : <Plus className="w-5 h-5 group-hover:scale-105 transition" />}
+                        </button>
+
+                        {/* Tooltip */}
+                        <div
+                            className="absolute -top-7 left-1/2 -translate-x-1/2 
+                                px-2 py-1 rounded-md bg-gray-800 text-white text-xs whitespace-nowrap
+                                opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            Send connection request
+                        </div>
+                    </div>
                 )}
 
                 {/* PENDING SENT BUTTON */}
@@ -165,11 +218,15 @@ const UserCard = ({ user }: UserProps) => {
                         <div className="relative group flex justify-center items-center">
                             <button
                                 onClick={handleCancelRequest}
-                                className="p-2 rounded-md flex justify-center items-center border border-gray-300 
-                                    bg-white hover:bg-gray-50 active:scale-95 transition duration-200
-                                    text-red-500 cursor-pointer"
+                                disabled={cancelLoading}
+                                className={`p-2 rounded-md flex justify-center items-center border border-gray-300 
+                                    bg-white transition duration-200
+                                    text-red-500 ${cancelLoading
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "cursor-pointer hover:bg-gray-50 active:scale-95"
+                                    }`}
                             >
-                                <X className="w-6 h-6 hover:scale-105 transition duration-200" />
+                                {cancelLoading ? "..." : <X className="w-6 h-6 hover:scale-105 transition duration-200" />}
                             </button>
 
                             {/* Tooltip */}
@@ -190,11 +247,19 @@ const UserCard = ({ user }: UserProps) => {
                         <div className="relative group flex justify-center items-center">
                             <button
                                 onClick={handleAccept}
-                                className="p-2 rounded-md flex justify-center items-center border border-gray-300 
-                                    bg-white hover:bg-gray-50 active:scale-95 transition duration-200
-                                    text-green-500 cursor-pointer"
+                                disabled={acceptLoading}
+                                className={`p-2 rounded-md flex justify-center items-center border border-gray-300 
+                                    bg-white transition duration-200
+                                    text-green-500 cursor-pointer ${acceptLoading
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "hover:bg-gray-50 active:scale-95"
+                                    }`}
                             >
-                                <Check className="w-6 h-6 hover:scale-105 transition duration-200" />
+                                {acceptLoading ? (
+                                    "..."
+                                ) : (
+                                    <Check className="w-6 h-6 hover:scale-105 transition duration-200" />
+                                )}
                             </button>
 
                             {/* Tooltip */}
@@ -210,11 +275,19 @@ const UserCard = ({ user }: UserProps) => {
                         <div className="relative group flex justify-center items-center">
                             <button
                                 onClick={handleDecline}
-                                className="p-2 rounded-md flex justify-center items-center border border-gray-300 
-                                    bg-white hover:bg-gray-50 active:scale-95 transition duration-200
-                                    text-red-500 cursor-pointer"
+                                disabled={declineLoading}
+                                className={`p-2 rounded-md flex justify-center items-center border border-gray-300 
+                                    bg-white transition duration-200
+                                    text-red-500 cursor-pointer ${declineLoading
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "hover:bg-gray-50 active:scale-95"
+                                    }`}
                             >
-                                <X className="w-6 h-6 hover:scale-105 transition duration-200" />
+                                {declineLoading ? (
+                                    "..."
+                                ) : (
+                                    <X className="w-6 h-6 hover:scale-105 transition duration-200" />
+                                )}
                             </button>
 
                             {/* Tooltip */}

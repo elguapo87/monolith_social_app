@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { dummyConnectionsData } from "../../../../public/assets";
 import { Search } from "lucide-react";
 import UserCard from "@/components/UserCard";
 import Loading from "@/components/Loading";
@@ -10,21 +9,12 @@ import { useAuth } from "@clerk/nextjs";
 
 type UserData = {
   _id: string;
-  email: string;
   full_name: string;
   user_name: string;
   bio: string;
   profile_picture: string;
-  cover_photo: string;
   location: string;
   followers: string[];
-  following: string[];
-  connections: string[];
-  posts: never[];
-  is_verified: boolean;
-  createdAt: string;
-  updatedAt: string;
-
 };
 
 const Discover = () => {

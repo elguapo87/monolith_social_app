@@ -19,7 +19,7 @@ export async function POST(req: Request) {
             _id: connectionId 
         });
 
-        return NextResponse.json({ success: true, message: "Connection Request canceled" });
+        return NextResponse.json({ success: true, message: "Connection request canceled" });
        
     } catch (error) {
         const errMesage = error instanceof Error ? error.message : "An unknown error occurred";

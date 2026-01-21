@@ -90,7 +90,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         });
 
         channel.bind("connection-request", (payload: RealtimeConnectionRequest) => {
-            dispatch(addPendingConnection(payload));
+            const isOnConnectionsPage = pathnameRef.current.startsWith("/auth/connections");
+            if (!isOnConnectionsPage) {
+                dispatch(addPendingConnection(payload));
+            }
         });
 
         return () => {

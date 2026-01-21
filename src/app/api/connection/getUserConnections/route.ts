@@ -3,6 +3,32 @@ import connectionModel from "@/models/connectionModel";
 import userModel from "@/models/userModel";
 import { NextResponse } from "next/server";
 
+interface UserData {
+    _id: string;
+    full_name: string;
+    user_name: string;
+    profile_picture: string;
+    location: string;
+    bio: string;
+    followers: [];
+};
+
+interface User {
+    user: UserData,
+    connectionId?: string;
+    type: "follower" | "following" | "pending_sent" | "pending_received" | "connection";
+};
+
+const mapUser = (u: UserData) => ({
+    _id: u._id,
+    full_name: u.full_name,
+    user_name: u.user_name,
+    profile_picture: u.profile_picture,
+    location: u.location,
+    bio: u.bio,
+    followers: u.followers
+});
+
 export async function GET() {
     try {
         const { authorized, user: authUser } = await protectUser();
@@ -11,6 +37,19 @@ export async function GET() {
         }
 
         const user = await userModel.findById(authUser._id).populate("connections followers following");
+        if (!user) {
+            return NextResponse.json({ success: false, message: "User not found" }, { status: 404 })
+        }
+
+        const followers: User[] = user.followers.map((u: UserData) => ({
+            user: mapUser(u),
+            type: "follower"
+        }));
+
+        const following: User[] = user.following.map((u: UserData) => ({
+            user: mapUser(u),
+            type: "following"
+        }));
 
         const acceptedConnections = await connectionModel.find({
             $or: [
@@ -18,52 +57,55 @@ export async function GET() {
                 { to_user_id: authUser._id }
             ],
             status: "accepted"
-        }).populate("from_user_id to_user_id");
+        })
+            .populate("from_user_id to_user_id");
 
-        // Map to a normalized structure so you have connectionId and the other user
-        const connectionsWithId = acceptedConnections.map((conn) => {
+        const connections: User[] = acceptedConnections.map((conn) => {
             const otherUser = conn.from_user_id._id === authUser._id ? conn.to_user_id : conn.from_user_id;
+
             return {
-                _id: otherUser._id,
-                full_name: otherUser.full_name,
-                email: otherUser.email,
-                user_name: otherUser.user_name,
-                bio: otherUser.bio,
-                profile_picture: otherUser.profile_picture,
-                followers: otherUser.followers,
-                following: otherUser.following,
-                connections: otherUser.connections,
-                connectionId: conn._id
+                user: mapUser(otherUser),
+                connectionId: conn._id,
+                type: "connection"
             }
         });
 
-        const followers = user.followers;
-        const following = user.following;
-
-        // INCOMING
-        const pendingConnections = await connectionModel.find({
-            to_user_id: authUser._id,
-            status: "pending"
-        }).populate("from_user_id");
-
-        // OUTGOING
-        const pendingSent = await connectionModel.find({
+        const pendingSentRaw = await connectionModel.find({
             from_user_id: authUser._id,
             status: "pending"
-        }).populate("to_user_id");
+        })
+            .populate("to_user_id");
+
+        const pendingSent: User[] = pendingSentRaw.map((conn) => ({
+            user: mapUser(conn.to_user_id),
+            connectionId: conn._id,
+            type: "pending_sent"
+        }));
+
+        const pendingConnectionsRaw = await connectionModel.find({
+            to_user_id: authUser._id,
+            status: "pending"
+        })
+            .populate("from_user_id");
+
+        const pendingConnections: User[] = pendingConnectionsRaw.map((conn) => ({
+            user: mapUser(conn.from_user_id),
+            connectionId: conn._id, 
+            type: "pending_received"
+        }));
 
         return NextResponse.json({
             success: true,
-            connections: connectionsWithId,
+            connections,
             followers,
             following,
-            pendingConnections,  // incoming 
-            pendingSent,  // outgoing 
-        });
+            pendingSent,
+            pendingConnections
+        })
 
     } catch (error) {
-        const errMesage = error instanceof Error ? error.message : "An unknown error occurred";
+        const errMessage = error instanceof Error ? error.message : "An unknown error occurred";
         console.log(error);
-        return NextResponse.json({ success: false, message: errMesage });
+        return NextResponse.json({ success: false, message: errMessage });
     }
-};
+}

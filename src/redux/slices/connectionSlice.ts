@@ -2,36 +2,28 @@ import api from "@/lib/axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 
-export interface IUser {
+interface UserData {
     _id: string;
     full_name: string;
-    email: string;
-    profile_picture?: string;
-    user_name?: string;
-    bio?: string;
-    location?: string;
-    cover_photo?: string;
-    followers?: string[];
-    following?: string[];
-    connections?: string[];
-    connectionId?: string;
-}
+    user_name: string;
+    profile_picture: string;
+    location: string;
+    bio: string;
+    followers: [];
+};
 
-export interface PendingData {
-    _id: string;
-    from_user_id: IUser | { _id: string };
-    to_user_id: IUser | { _id: string };
-    status: string;
-    updatedAt?: Date;
-    createdAt?: Date;
+export interface ConnectionItem {
+    user: UserData;
+    connectionId?: string;
+    type: "follower" | "following" | "pending_sent" | "pending_received" | "connection";
 }
 
 export interface ConnectionState {
-    connections: IUser[];
-    followers: IUser[];
-    following: IUser[];
-    pendingConnections: PendingData[]
-    pendingSent: PendingData[];
+    connections: ConnectionItem[];
+    followers: ConnectionItem[];
+    following: ConnectionItem[];
+    pendingConnections: ConnectionItem[]
+    pendingSent: ConnectionItem[];
     loading: boolean;
 }
 
@@ -175,7 +167,7 @@ const connectionSlice = createSlice({
     reducers: {
         addPendingConnection: (state, action) => {
             const exists = state.pendingConnections.some(
-                (c) => c._id === action.payload._id
+                (c) => c.connectionId === action.payload.connectionId
             );
 
             if (!exists) {
@@ -185,7 +177,7 @@ const connectionSlice = createSlice({
 
         removePendingConnection: (state, action) => {
             state.pendingConnections = state.pendingConnections.filter(
-                (c) => c._id !== action.payload
+                (c) => c.connectionId !== action.payload
             );
         }
     },
