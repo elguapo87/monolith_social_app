@@ -158,18 +158,36 @@ const Connections = () => {
                     {dataArray.map((item, index) => (
                         <div
                             key={index}
-                            className="flex flex-col items-center justify-center gap-1 border
+                            className="max-md:hidden flex flex-col items-center justify-center gap-1 border
                              h-20 w-40 border-gray-200 bg-white shadow rounded-md"
                         >
                             <b>{item.value?.length}</b>
                             <p className="text-slate-600">{item.label}</p>
                         </div>
                     ))}
+
+                    {/* MOBILE */}
+                    <div className='flex flex-wrap gap-1 md:hidden'>
+                        {dataArray.map((tab) => (
+                            <div
+                                key={tab.label}
+                                onClick={() => setCurrentTab(tab.label)}
+                                className={`mx-auto flex flex-col items-center justify-center gap-1 border
+                                    h-20 w-40 border-gray-200 shadow rounded-md cursor-pointer
+                                    ${currentTab === tab.label 
+                                        ? "bg-stone-100 border-gray-300 font-medium text-black" 
+                                        : "bg-white text-gray-600"}`}
+                            >
+                                <b>{tab.value?.length}</b>
+                                <p>{tab.label}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* TABS */}
                 <div
-                    className="inline-flex flex-wrap items-center border border-gray-200
+                    className="max-md:hidden inline-flex flex-wrap items-center border border-gray-200
                      rounded-md p-1 bg-white shadow-sm"
                 >
                     {dataArray.map((tab) => (
