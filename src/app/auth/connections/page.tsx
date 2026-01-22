@@ -38,6 +38,13 @@ const Connections = () => {
         { label: "Connections", value: connections, icon: UserPlus },
     ];
 
+    const [followLoading, setFollowLoading] = useState(false);
+    const [sendLoading, setSendLoading] = useState(false);
+    const [cancelLoading, setCancelLoading] = useState(false);
+    const [acceptLoading, setAcceptLoading] = useState(false);
+    const [declineLoading, setDeclineLoading] = useState(false);
+    const [removeLoading, setRemoveLoading] = useState(false);
+
     useEffect(() => {
         getToken().then((token) => {
             dispatch(fetchConnections(token));
@@ -45,47 +52,94 @@ const Connections = () => {
     }, []);
 
     const handleFollow = async (targetUserId: string) => {
-        const token = await getToken();
-        await dispatch(followUser({ targetUserId, token }));
-        dispatch(fetchConnections(token));
+        if (followLoading) return
+        setFollowLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(followUser({ targetUserId, token }));
+            dispatch(fetchConnections(token));
+        } finally {
+            setFollowLoading(false);
+        }
     };
 
     const handleUnfollow = async (targetUserId: string) => {
-        const token = await getToken();
-        await dispatch(unfollowUser({ targetUserId, token }));
-        dispatch(fetchConnections(token));
+        if (followLoading) return
+        setFollowLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(unfollowUser({ targetUserId, token }));
+            dispatch(fetchConnections(token));
+        } finally {
+            setFollowLoading(false);
+        }
     };
 
     const handleConnectionRequest = async (id: string) => {
-        const token = await getToken();
-        await dispatch(sendConnection({ id, token }));
-        dispatch(fetchConnections(token));
+        if (sendLoading) return;
+        setSendLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(sendConnection({ id, token }));
+            dispatch(fetchConnections(token));
+        } finally {
+            setSendLoading(false);
+        }
     };
 
     const handleCancelRequest = async (connectionId: string | null) => {
-        if (!connectionId) return;
-        const token = await getToken();
-        await dispatch(cancelConnectionRequest({ connectionId, token }));
-        dispatch(fetchConnections(token));
+        if (!connectionId || cancelLoading) return;
+        setCancelLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(cancelConnectionRequest({ connectionId, token }));
+            dispatch(fetchConnections(token));
+        } finally {
+            setCancelLoading(false);
+        }
     };
 
     const handleAccept = async (id: string) => {
-        const token = await getToken();
-        await dispatch(acceptConnectionRequest({ id, token }));
-        dispatch(fetchConnections(token));
+        if (acceptLoading) return;
+        setAcceptLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(acceptConnectionRequest({ id, token }));
+            dispatch(fetchConnections(token));
+        } finally {
+            setAcceptLoading(false);
+        }
     };
 
     const handleDecline = async (id: string) => {
-        const token = await getToken();
-        await dispatch(declineConnectionRequest({ id, token }));
-        dispatch(fetchConnections(token));
+        if (declineLoading) return;
+        setDeclineLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(declineConnectionRequest({ id, token }));
+            dispatch(fetchConnections(token));
+        } finally {
+            setDeclineLoading(false);
+        }
     };
 
     const handleDelete = async (connectionId: string | null) => {
-        if (!connectionId) return;
-        const token = await getToken();
-        await dispatch(deleteConnection({ connectionId, token }));
-        dispatch(fetchConnections(token));
+        if (!connectionId || removeLoading) return;
+        setRemoveLoading(true);
+
+        try {
+            const token = await getToken();
+            await dispatch(deleteConnection({ connectionId, token }));
+            dispatch(fetchConnections(token));
+        } finally {
+            setRemoveLoading(false);
+        }
     }
 
     if (loading) return <Loading />
@@ -186,13 +240,18 @@ const Connections = () => {
                                                 {!currentUser?.following?.includes(user?.user?._id) && (
                                                     <button
                                                         onClick={() => handleFollow(user?.user?._id)}
-                                                        className="py-2 px-3 rounded flex justify-center items-center
+                                                        disabled={followLoading}
+                                                        className={`py-2 px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
-                                                            active:scale-95 transition text-white cursor-pointer"
+                                                            active:scale-95 transition text-white cursor-pointer
+                                                            ${followLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                     >
-                                                        <UserPlus className="w-5 h-5" />
-                                                        Follow
+                                                        { }
+                                                        <UserPlus
+                                                            className={`w-5 h-5 ${followLoading ? "animate-spin" : ""}`}
+                                                        />
+                                                        {followLoading ? "Please wait..." : "Follow"}
                                                     </button>
                                                 )}
 
@@ -200,11 +259,17 @@ const Connections = () => {
                                                     <div className='relative group flex justify-center items-center'>
                                                         <button
                                                             onClick={() => handleConnectionRequest(user?.user?._id)}
-                                                            className="p-3 text-sm rounded bg-slate-100
+                                                            disabled={sendLoading}
+                                                            className={`p-3 text-sm rounded bg-slate-100
                                                                 hover:bg-slate-200 text-slate-500 active:scale-95
-                                                                transition cursor-pointer"
+                                                                transition cursor-pointer
+                                                                ${sendLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                         >
-                                                            <Plus className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                            {sendLoading ? (
+                                                                "..."
+                                                            ) : (
+                                                                <Plus className="w-5 h-5 group-hover:scale-105 transition" />
+                                                            )}
                                                         </button>
 
                                                         {/* Tooltip */}
@@ -226,24 +291,34 @@ const Connections = () => {
                                             <div className='flex items-center gap-2'>
                                                 <button
                                                     onClick={() => handleUnfollow(user?.user?._id)}
-                                                    className="py-2 px-3 rounded flex justify-center items-center
+                                                    disabled={followLoading}
+                                                    className={`py-2 px-3 rounded flex justify-center items-center
                                                         gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                     hover:from-indigo-600 hover:to-purple-700
-                                                        active:scale-95 transition text-white cursor-pointer"
+                                                        active:scale-95 transition text-white cursor-pointer
+                                                        ${followLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 >
-                                                    <UserPlus className="w-5 h-5" />
-                                                    Unfollow
+                                                    <UserPlus
+                                                        className={`w-5 h-5 ${followLoading ? "animate-spin" : ""}`}
+                                                    />
+                                                    {followLoading ? "Please wait..." : "Unfollow"}
                                                 </button>
 
                                                 {canSendConnection && (
                                                     <div className='relative group flex justify-center items-center'>
                                                         <button
                                                             onClick={() => handleConnectionRequest(user?.user?._id)}
-                                                            className="p-3 text-sm rounded bg-slate-100
-                                                        hover:bg-slate-200 text-slate-500 active:scale-95
-                                                        transition cursor-pointer"
+                                                            disabled={sendLoading}
+                                                            className={`p-3 text-sm rounded bg-slate-100
+                                                                hover:bg-slate-200 text-slate-500 active:scale-95
+                                                                transition cursor-pointer
+                                                                ${sendLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                         >
-                                                            <Plus className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                            {sendLoading ? (
+                                                                "..."
+                                                            ) : (
+                                                                <Plus className="w-5 h-5 group-hover:scale-105 transition" />
+                                                            )}
                                                         </button>
 
                                                         {/* Tooltip */}
@@ -269,11 +344,17 @@ const Connections = () => {
                                                                 handleCancelRequest(user?.connectionId)
                                                             }
                                                         }}
-                                                        className="py-2.5 px-3 text-sm rounded bg-slate-100
+                                                        disabled={cancelLoading}
+                                                        className={`py-2.5 px-3 text-sm rounded bg-slate-100
                                                         hover:bg-slate-200 text-red-500 active:scale-95
-                                                        transition cursor-pointer"
+                                                        transition cursor-pointer
+                                                        ${cancelLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                     >
-                                                        <X className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                        {cancelLoading ? (
+                                                            "..."
+                                                        ) : (
+                                                            <X className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                        )}
                                                     </button>
 
                                                     {/* Tooltip */}
@@ -289,13 +370,17 @@ const Connections = () => {
                                                 {!currentUser?.following?.includes(user?.user?._id) && (
                                                     <button
                                                         onClick={() => handleFollow(user?.user?._id)}
-                                                        className="py-2 px-3 rounded flex justify-center items-center
+                                                        disabled={followLoading}
+                                                        className={`py-2 px-3 rounded flex justify-center items-center
                                                             gap-1 bg-linear-to-r from-indigo-500 to-purple-600
                                                         hover:from-indigo-600 hover:to-purple-700
-                                                            active:scale-95 transition text-white cursor-pointer"
+                                                            active:scale-95 transition text-white cursor-pointer
+                                                            ${followLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                     >
-                                                        <UserPlus className="w-5 h-5" />
-                                                        Follow
+                                                        <UserPlus
+                                                            className={`w-5 h-5 ${followLoading ? "animate-spin" : ""}`}
+                                                        />
+                                                        {followLoading ? "Please wait..." : "Follow"}
                                                     </button>
                                                 )}
                                             </div>
@@ -306,11 +391,19 @@ const Connections = () => {
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
                                                         onClick={() => handleAccept(user?.user?._id)}
-                                                        className="md:w-full p-3 text-sm rounded bg-slate-100
+                                                        disabled={acceptLoading}
+                                                        className={`md:w-full p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-green-500 active:scale-95
-                                                            transition cursor-pointer"
+                                                            transition cursor-pointer
+                                                            ${acceptLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                     >
-                                                        <Check className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                        {acceptLoading ? (
+                                                            "..."
+                                                        ) : (
+                                                            <Check
+                                                                className="w-5 h-5 hover:scale-105 transition duration-200"
+                                                            />
+                                                        )}
                                                     </button>
 
                                                     {/* Tooltip */}
@@ -326,11 +419,17 @@ const Connections = () => {
                                                 <div className='relative group flex justify-center items-center'>
                                                     <button
                                                         onClick={() => handleDecline(user?.user?._id)}
-                                                        className="md:w-full p-3 text-sm rounded bg-slate-100
+                                                        disabled={declineLoading}
+                                                        className={`md:w-full p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-red-500 active:scale-95
-                                                            transition cursor-pointer"
+                                                            transition cursor-pointer
+                                                            ${declineLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                     >
-                                                        <X className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                        {declineLoading ? (
+                                                            "..."
+                                                        ) : (
+                                                            <X className="w-5 h-5 hover:scale-105 transition duration-200" />
+                                                        )}
                                                     </button>
 
                                                     {/* Tooltip */}
@@ -370,13 +469,17 @@ const Connections = () => {
                                                 {!currentUser?.following?.includes(user?.user?._id) && (
                                                     <button
                                                         onClick={() => handleFollow(user?.user?._id)}
-                                                        className="w-full py-2.5 md:px-3 rounded flex justify-center items-center
-                                                            gap-1 bg-linear-to-r from-indigo-500 to-purple-600
-                                                        hover:from-indigo-600 hover:to-purple-700
-                                                            active:scale-95 transition text-white cursor-pointer"
+                                                        disabled={followLoading}
+                                                        className={`w-full py-2.5 md:px-3 rounded flex justify-center
+                                                             items-center gap-1 bg-linear-to-r from-indigo-500
+                                                            to-purple-600 hover:from-indigo-600 hover:to-purple-700
+                                                            active:scale-95 transition text-white cursor-pointer
+                                                            ${followLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                     >
-                                                        <UserPlus className="w-5 h-5" />
-                                                        Follow
+                                                        <UserPlus
+                                                            className={`w-5 h-5 ${followLoading ? "animate-spin" : ""}`}
+                                                        />
+                                                        {followLoading ? "Please wait..." : "Follow"}
                                                     </button>
                                                 )}
 
@@ -387,11 +490,14 @@ const Connections = () => {
                                                                 handleDelete(user?.connectionId)
                                                             }
                                                         }}
-                                                        className="w-full p-3 text-sm rounded bg-slate-100
+                                                        disabled={removeLoading}
+                                                        className={`w-full p-3 text-sm rounded bg-slate-100
                                                             hover:bg-slate-200 text-red-500 active:scale-95
-                                                            transition cursor-pointer flex items-center justify-center gap-1"
+                                                            transition cursor-pointer flex items-center
+                                                            justify-center gap-1
+                                                            ${removeLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                                     >
-                                                        <CircleX className="w-5 h-5" />
+                                                        {removeLoading ? "..." : <CircleX className="w-5 h-5" />}
                                                     </button>
 
                                                     {/* Tooltip */}
