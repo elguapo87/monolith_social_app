@@ -9,9 +9,16 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import api from "@/lib/axios";
-import { IUser } from "@/redux/slices/connectionSlice";
 import toast from "react-hot-toast";
 import { addMessage, fetchMessages, resetMessages } from "@/redux/slices/messageSlice";
+
+type User = {
+    _id: string;
+    full_name: string;
+    profile_picture?: string;
+    user_name?: string;
+    bio?: string;
+}
 
 const ChatBox = () => {
     const { userId } = useParams() as { userId: string };
@@ -22,41 +29,41 @@ const ChatBox = () => {
 
     const [text, setText] = useState("");
     const [image, setImage] = useState<File | null>(null);
-    const [user, setUser] = useState<IUser | null>(null);
+    const [user, setUser] = useState<User | null>(null);
 
     const messageEndRef = useRef<HTMLDivElement | null>(null);
 
 
     const fetchConnection = async () => {
-            try {
-                const token = await getToken();
-                const { data } = await api.post("/connection/getConnection", { otherUserId: userId }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+        try {
+            const token = await getToken();
+            const { data } = await api.post("/connection/getConnection", { otherUserId: userId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-                if (data.success) {
-                    setUser(data.user);
+            if (data.success) {
+                setUser(data.user);
 
-                } else {
-                    toast.error(data.message);
-                }
-
-            } catch (error) {
-                const err = error instanceof Error ? error.message : "Unknown error";
-                console.error(err);
+            } else {
+                toast.error(data.message);
             }
+
+        } catch (error) {
+            const err = error instanceof Error ? error.message : "Unknown error";
+            console.error(err);
         }
+    }
 
-        const fetchUserMessages = async () => {
-            try {
-                const token = await getToken();
-                dispatch(fetchMessages({ to_user_id: userId, token }));
-    
-            } catch (error) {
-                const errMesage = error instanceof Error ? error.message : "An unknown error occurred";
-                toast.error(errMesage)
-            }
-        };
+    const fetchUserMessages = async () => {
+        try {
+            const token = await getToken();
+            dispatch(fetchMessages({ to_user_id: userId, token }));
+
+        } catch (error) {
+            const errMesage = error instanceof Error ? error.message : "An unknown error occurred";
+            toast.error(errMesage)
+        }
+    };
 
     useEffect(() => {
         const init = async () => {
@@ -64,7 +71,7 @@ const ChatBox = () => {
                 fetchConnection();
                 dispatch(resetMessages());
                 fetchUserMessages();
-                
+
 
             } catch (error) {
                 console.error(error);
