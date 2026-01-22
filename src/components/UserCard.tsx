@@ -125,7 +125,7 @@ const UserCard = ({ user }: UserProps) => {
     return (
         <div
             key={user._id}
-            className="p-4 pt-6 flex flex-col justify-between w-72 shadow border border-gray-200 rounded-md"
+            className="p-4 pt-6 flex flex-col justify-between w-72 shadow border border-gray-200 rounded-md max-md:mx-auto"
         >
             <div className="text-center">
                 <Image

@@ -6,6 +6,7 @@ import UserCard from "@/components/UserCard";
 import Loading from "@/components/Loading";
 import api from "@/lib/axios";
 import { useAuth } from "@clerk/nextjs";
+import toast from "react-hot-toast";
 
 type UserData = {
   _id: string;
@@ -25,10 +26,34 @@ const Discover = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const fetchRecentUsers = async () => {
+    setLoading(true)
+    const token = await getToken();
+
+    try {
+      const { data } = await api.get("/user/discoverRecent", {
+        headers: { Authorization: `${token}` }
+      });
+
+      if (data.success) {
+        setUsers(data.recentUsers);
+
+      } else {
+        toast.error(data.message);
+      }
+      
+    } catch (error) {
+      console.error(error, "Failed to fetch recent users");
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // If input is empty, clear results and stop
     if (input.trim() === "") {
-      setUsers([]);
+      fetchRecentUsers();
       setLoading(false);
       return;
     }
@@ -56,7 +81,9 @@ const Discover = () => {
     }, 500);
 
     return () => clearTimeout(delayDebounce);
-  }, [input])
+  }, [input]);
+
+  const isSearching = input.trim();
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
@@ -82,16 +109,26 @@ const Discover = () => {
             </div>
           </div>
         </div>
+        
+        {!isSearching && (
+          <h2 className="text-lg max-md:text-center md:text-2xl font-semibold text-gray-600 mb-3">
+            Recently joined users
+          </h2>
+        )}
 
+        {isSearching && (
+          <h2 className="text-lg max-md:text-center md:text-2xl font-semibold text-gray-600 mb-3">
+            Search results for "{input}"
+          </h2>
+        )}
+   
         <div className="flex flex-wrap gap-6">
           {users.map((user) => (
             <UserCard key={user._id} user={user} />
           ))}
         </div>
 
-        {
-          loading && <Loading height='60vh' />
-        }
+        {loading && <Loading height='60vh' />}
       </div>
     </div>
   )
