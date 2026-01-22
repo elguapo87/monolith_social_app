@@ -25,6 +25,7 @@ const Discover = () => {
   const [input, setInput] = useState("");
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [placeholder, setPlaceholder] = useState("Search people...");
 
   const fetchRecentUsers = async () => {
     setLoading(true)
@@ -32,7 +33,7 @@ const Discover = () => {
 
     try {
       const { data } = await api.get("/user/discoverRecent", {
-        headers: { Authorization: `${token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (data.success) {
@@ -85,6 +86,20 @@ const Discover = () => {
 
   const isSearching = input.trim();
 
+  useEffect(() => {
+    const updatePlacehodler = () => {
+      setPlaceholder(
+        window.innerWidth < 640 
+          ? "Search people…"
+          : "Search people by name, username, bio, or location…"
+      );
+    };
+
+    updatePlacehodler();
+    window.addEventListener("resize", updatePlacehodler);
+    return () => window.removeEventListener("resize", updatePlacehodler);
+  }, []);
+
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
       <div className="max-w-6xl mx-auto p-6">
@@ -103,7 +118,7 @@ const Discover = () => {
                 onChange={(e) => setInput(e.target.value)}
                 value={input}
                 type="text"
-                placeholder="Search people by name, username, bio, or location..."
+                placeholder={placeholder}
                 className="pl-10 sm:pl-12 py-2 w-full border border-gray-300 rounded-md max-sm:text-sm"
               />
             </div>
