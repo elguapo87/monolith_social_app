@@ -16,6 +16,7 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
 
     const bgColors = [
         "#4f46e5",
+        "#111111",
         "#7c3aed",
         "#db2777",
         "#e11d48",
