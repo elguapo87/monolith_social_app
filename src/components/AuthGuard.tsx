@@ -52,8 +52,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             router.replace("/");
         }
 
-        if (isLoaded && user && userState?._id !== user.id) {
-            getToken().then((token: string | null) => {
+        if (isLoaded && user && !userState?._id) {
+            getToken().then((token) => {
                 if (token) {
                     dispatch(fetchUser(token));
                 }
