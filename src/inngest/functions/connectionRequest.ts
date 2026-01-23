@@ -24,7 +24,7 @@ function connectionEmailTemplate(connection: IConnection & { from_user_id: IUser
             @${connection.from_user_id.user_name}
         </p>
         <p>
-          Click <a href="${process.env.FRONTEND_URL}/connections" style="color: #10b981;">here</a>
+          Click <a href="${process.env.FRONTEND_URL}/auth/connections" style="color: #10b981;">here</a>
           to accept or reject the request.
         </p>
         <br/>
