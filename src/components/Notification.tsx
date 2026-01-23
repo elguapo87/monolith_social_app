@@ -21,6 +21,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const { getToken } = useAuth();
 
     const unreadMessages = useSelector((state: RootState) => state.notifications.items || []);
+    const userId = useSelector((state: RootState) => state.user.value?._id);
     const dispatch = useDispatch<AppDispatch>();
 
     const [showMenu, setShowMenu] = useState(false);
@@ -30,31 +31,31 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const totalUnread = unreadMessages.reduce((sum, msg) => sum + msg.unread_count, 0);
 
     useEffect(() => {
+        if (!userId) return;
+        if (!showMenu && !sidebarOpen) return;
+
         const fetchRecentConversations = async () => {
             try {
                 const token = await getToken();
+                if (!token) return;
 
                 const { data } = await api.get("/message/getUserRecentMessages", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
                 if (data.success) {
-                    // Keep ONLY unread conversations
-                    const unreadOnly = data.recent_messages.filter((c: Record<string, number>) => c.unread_count > 0);
-
+                    const unreadOnly = data.recent_messages.filter(
+                        (c: { unread_count: number }) => c.unread_count > 0
+                    );
                     dispatch(setNotifications(unreadOnly));
-
-                } else {
-                    toast.error(data.message);
                 }
-
-            } catch (error) {
-                toast.error("Failed to fetch notifications");
+            } catch {
+                // Optional: suppress toast during hydration
             }
         };
 
         fetchRecentConversations();
-    }, [showMenu, sidebarOpen]);
+    }, [userId, showMenu, sidebarOpen]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
