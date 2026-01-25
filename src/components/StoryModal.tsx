@@ -4,7 +4,7 @@ import api from "@/lib/axios";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, Sparkle, TextIcon, Upload } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react"
+import { useRef, useState } from "react"
 import toast from "react-hot-toast";
 
 type Props = {
@@ -33,6 +33,8 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
     const MAX_VIDEO_DURATION = 60;  // seconds
     const MAX_VIDEO_SIZE_MB = 50;  // MB
 
@@ -44,6 +46,11 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
                     toast.error(`Video file size cannot exeed ${MAX_VIDEO_SIZE_MB}MB.`);
                     setMedia(null);
                     setPreviewUrl(null);
+
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                    }
+
                     return;
                 }
                 const video = document.createElement("video");
@@ -54,6 +61,11 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
                         toast.error("Video duration cannot exeed 1 minute.");
                         setMedia(null);
                         setPreviewUrl(null);
+
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                        }
+
                         return;
 
                     } else {
@@ -180,8 +192,10 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
 
                     >
                         <input
-                            onChange={(e) => { handleMediaUpload(e); setMode("media"); }}
-                            type="file" accept="image/*, video/*"
+                            ref={fileInputRef}
+                            onChange={handleMediaUpload}
+                            type="file" 
+                            accept="image/*, video/*"
                             className="hidden"
                         />
                         <Upload size={18} /> Photo/Video
