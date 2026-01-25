@@ -54,6 +54,7 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
                         toast.error("Video duration cannot exeed 1 minute.");
                         setMedia(null);
                         setPreviewUrl(null);
+                        return;
 
                     } else {
                         setMedia(file);
