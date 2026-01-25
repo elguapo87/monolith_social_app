@@ -89,6 +89,11 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
     const handleCreateStory = async () => {
         const token = await getToken();
 
+        if (mode === "media" && !media) {
+            toast.error("Please select a valid media file");
+            return;
+        }
+
         const media_type = mode === "media" ? media?.type.startsWith("image") ? "image" : "video" : "text";
 
         if (media_type === "text" && !text.trim()) {
@@ -194,7 +199,7 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
                         <input
                             ref={fileInputRef}
                             onChange={handleMediaUpload}
-                            type="file" 
+                            type="file"
                             accept="image/*, video/*"
                             className="hidden"
                         />
