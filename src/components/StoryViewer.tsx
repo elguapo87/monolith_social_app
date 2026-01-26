@@ -1,7 +1,11 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { assets } from "../../public/assets";
-import { BadgeCheck, X } from "lucide-react";
+import { BadgeCheck, Eye, X } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { useAuth } from "@clerk/nextjs";
+import { viewStoryCount } from "@/redux/slices/storySlice";
 
 type StoriesType = {
   _id: string
@@ -25,7 +29,9 @@ type Props = {
 };
 
 const StoryViewer = ({ viewStory, setViewStory }: Props) => {
-
+  const currentUser = useSelector((state: RootState) => state.user.value);
+  const { getToken } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -55,6 +61,33 @@ const StoryViewer = ({ viewStory, setViewStory }: Props) => {
       }
     }
   }, [viewStory, setViewStory]);
+
+  useEffect(() => {
+    if (!viewStory || !currentUser) return;
+
+    const viewPayload = async () => {
+      const token = await getToken();
+      dispatch(viewStoryCount({
+        storyId: viewStory._id,
+        token,
+        userId: currentUser._id
+      }));
+
+      setViewStory((prev) => {
+        if (!prev) return prev;
+
+        const views = prev.view_count ?? [];
+        if (views.includes(currentUser._id)) return prev;
+        return {
+          ...prev,
+          view_count: [...views, currentUser._id]
+        };
+      });
+    }
+
+    viewPayload();
+
+  }, [viewStory?._id]);
 
   const handleClose = () => {
     setViewStory(null);
@@ -137,6 +170,14 @@ const StoryViewer = ({ viewStory, setViewStory }: Props) => {
         <div className="text-white font-medium flex items-center gap-1.5">
           <span>{viewStory.user.full_name}</span>
           <BadgeCheck size={18} />
+        </div>
+
+        <p className='text-white font-semibold text-lg'>/</p>
+
+        {/* VIEW COUNT */}
+        <div className='text-sm text-white font-medium flex items-center gap-2'>
+          <Eye size={18} />
+          {viewStory.view_count?.length ?? 0}
         </div>
       </div>
 

@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { assets } from "../../public/assets";
 import MenuItems from "./MenuItems";
-import Link from "next/link";
 import { CirclePlus, LogOut } from "lucide-react";
 import { UserButton, useClerk } from "@clerk/nextjs";
 import { useDispatch, useSelector } from "react-redux";
