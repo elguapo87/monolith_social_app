@@ -12,6 +12,9 @@ import Notification from "./Notification";
 import { clearUser } from "@/redux/slices/userSlice";
 import { clearNotifications } from "@/redux/slices/notificationSlice";
 import { resetMessages } from "@/redux/slices/messageSlice";
+import { clearStories } from "@/redux/slices/storySlice";
+import { clearComments } from "@/redux/slices/commentSlice";
+import { clearPosts } from "@/redux/slices/postSlice";
 
 type AuthLayoutProps = {
   sidebarOpen: boolean;
@@ -75,7 +78,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: AuthLayoutProps) => {
           onClick={async () => {
             dispatch(clearUser());
             dispatch(clearNotifications());
+            dispatch(clearPosts());
             dispatch(resetMessages());
+            dispatch(clearComments());
+            dispatch(clearStories());
             await signOut();
           }}
         />

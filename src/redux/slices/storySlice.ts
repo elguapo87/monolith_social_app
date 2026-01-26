@@ -99,7 +99,13 @@ export const viewStoryCount = createAsyncThunk("story/view", async (
 const storySlice = createSlice({
     name: "story",
     initialState,
-    reducers: {},
+    reducers: {
+        clearStories: (state) => {
+            state.stories = [];
+            state.loading = false;
+            state.viewing = false;
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(addStory.pending, (state) => {
@@ -148,5 +154,7 @@ const storySlice = createSlice({
             })
     }
 })
+
+export const { clearStories } = storySlice.actions;
 
 export default storySlice.reducer;

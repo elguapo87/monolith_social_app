@@ -122,7 +122,14 @@ export const deleteComment =
 const commentSlice = createSlice({
     name: "comments",
     initialState,
-    reducers: {},
+    reducers: {
+        clearComments: (state) => {
+            state.commentCount = {};
+            state.commentsByPost = {};
+            state.commentsLoaded = {};
+            state.loading = false;
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchComments.pending, (state) => {
@@ -193,5 +200,7 @@ const commentSlice = createSlice({
             })
     }
 });
+
+export const { clearComments } = commentSlice.actions;
 
 export default commentSlice.reducer;

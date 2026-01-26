@@ -83,7 +83,7 @@ const StoryViewer = ({ viewStory, setViewStory }: Props) => {
           view_count: [...views, currentUser._id]
         };
       });
-    }
+    };
 
     viewPayload();
 

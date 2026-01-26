@@ -151,6 +151,12 @@ const postSlice = createSlice({
     name: "post",
     initialState,
     reducers: {
+        clearPosts: (state) => {
+            state.posts = [];
+            state.loading = false;
+            state.pendingLikeMap = {};
+            state.likedPosts = [];
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -303,5 +309,7 @@ const postSlice = createSlice({
             // })
     }
 });
+
+export const { clearPosts } = postSlice.actions;
 
 export default postSlice.reducer;
