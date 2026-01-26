@@ -8,15 +8,7 @@ type StoriesType = {
   user: {
     _id: string;
     full_name: string;
-    email: string;
     profile_picture?: string;
-    user_name?: string;
-    bio?: string;
-    location?: string;
-    cover_photo?: string;
-    followers?: string[];
-    following?: string[];
-    connections?: string[];
   }
   content: string;
   media_url: string
@@ -24,13 +16,13 @@ type StoriesType = {
   background_color: string
   createdAt?: Date;
   updatedAt?: Date;
-  view_count?: [];
-}
+  view_count?: string[];
+};
 
 type Props = {
   viewStory: StoriesType | null;
   setViewStory: React.Dispatch<React.SetStateAction<StoriesType | null>>
-}
+};
 
 const StoryViewer = ({ viewStory, setViewStory }: Props) => {
 

@@ -1,18 +1,19 @@
 "use client"
 
-import api from "@/lib/axios";
+import { addStory, fetchStories } from "@/redux/slices/storySlice";
+import { AppDispatch } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, Sparkle, TextIcon, Upload } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react"
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
 
 type Props = {
     setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
-    fetchStories: () => Promise<void>;
 };
 
-const StoryModal = ({ setShowModal, fetchStories }: Props) => {
+const StoryModal = ({ setShowModal }: Props) => {
 
     const bgColors = [
         "#4f46e5",
@@ -25,6 +26,7 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
     ]
 
     const { getToken } = useAuth();
+    const dispatch = useDispatch<AppDispatch>();
 
     const [mode, setMode] = useState("text");
     const [background, setBackground] = useState(bgColors[0]);
@@ -112,18 +114,9 @@ const StoryModal = ({ setShowModal, fetchStories }: Props) => {
                 formData.append("media", media);
             }
 
-            const { data } = await api.post("/story/addStory", formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (data.success) {
-                setShowModal(false);
-                toast.success(data.message);
-                await fetchStories();
-
-            } else {
-                toast.error(data.message)
-            }
+            await dispatch(addStory({ storyData: formData, token }));
+            setShowModal(false);
+            await dispatch(fetchStories(token));
 
         } catch (error) {
             const errMessage = error instanceof Error ? error.message : "An unknown error occurred";

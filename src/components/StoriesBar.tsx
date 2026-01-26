@@ -8,23 +8,16 @@ import moment from "moment";
 import StoryModal from "./StoryModal";
 import StoryViewer from "./StoryViewer";
 import { useAuth } from "@clerk/nextjs";
-import api from "@/lib/axios";
-import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { fetchStories } from "@/redux/slices/storySlice";
 
 type StoriesType = {
-    _id: string
+   _id: string
     user: {
         _id: string;
         full_name: string;
-        email: string;
         profile_picture?: string;
-        user_name?: string;
-        bio?: string;
-        location?: string;
-        cover_photo?: string;
-        followers?: string[];
-        following?: string[];
-        connections?: string[];
     }
     content: string;
     media_url: string
@@ -32,36 +25,21 @@ type StoriesType = {
     background_color: string
     createdAt?: Date;
     updatedAt?: Date;
-    view_count?: [];
+    view_count?: string[];
 }
 
 const StoriesBar = () => {
     const { getToken } = useAuth();
+    const stories = useSelector((state: RootState) => state.story.stories);
+    const dispatch = useDispatch<AppDispatch>();
 
-    const [stories, setStories] = useState<StoriesType[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [viewStory, setViewStory] = useState<StoriesType | null>(null);
 
-    const fetchStories = async () => {
-        try {
-            const token = await getToken();
-
-            const { data } = await api.get("/story/getStories", {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (data.success) {
-                setStories(data.stories);
-            }
-
-        } catch (error) {
-            const errMessage = error instanceof Error ? error.message : "An unknown error occurred";
-            toast.error(errMessage);
-        }
-    };
-
     useEffect(() => {
-        fetchStories();
+        getToken().then((token) => {
+            dispatch(fetchStories(token));
+        })
     }, []);
 
     return (
@@ -141,7 +119,7 @@ const StoriesBar = () => {
             </div>
 
             {/* ADD STORY MODAL */}
-            {showModal && <StoryModal setShowModal={setShowModal} fetchStories={fetchStories} />}
+            {showModal && <StoryModal setShowModal={setShowModal} />}
 
             {/* VIEW STORY MODAL */}
             {viewStory && <StoryViewer viewStory={viewStory} setViewStory={setViewStory} />}
