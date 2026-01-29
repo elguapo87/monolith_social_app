@@ -20,7 +20,7 @@ const Profile = () => {
 
     const { profileId } = useParams() as { profileId: string };
 
-    const { posts, loading } = useProfile(profileId);
+    const { user, posts, loading } = useProfile(profileId);
 
     const likedPosts = useSelector((state: RootState) => state.post.likedPosts);
     const currentUser = useSelector((state: RootState) => state.user.value);
@@ -30,21 +30,26 @@ const Profile = () => {
     const [activeTab, setActiveTab] = useState("posts");
     const [showEdit, setShowEdit] = useState(false);
 
-    const isOwnProfile = currentUser?._id === profileId;
+    const otherProfile = user?._id === profileId;
 
     // const userData = posts[0]?.user;
-    const userData = isOwnProfile ? currentUser : posts[0]?.user;
-    
+    const userData = otherProfile ? user : posts[0]?.user;
+    const isCurrentProfile = currentUser?._id === profileId;
+
     useEffect(() => {
-        if (!isOwnProfile) return;
+        if (!otherProfile) return;
         if (activeTab !== "likes") return;
 
         getToken().then((token) => {
             dispatch(fetchLikedPosts(token));
         });
-    }, [activeTab, isOwnProfile, dispatch, getToken]);
+    }, [activeTab, otherProfile, dispatch, getToken]);
 
     if (loading) return <Loading />
+
+    if (!user) {
+        return <p>User not found</p>;
+    }
 
     if (!userData) {
         return (
@@ -83,7 +88,7 @@ const Profile = () => {
                 {/* TABS */}
                 <div className="mt-6">
                     <div className="bg-white rounded-xl shadow p-1 flex max-w-md mx-auto">
-                        {["posts", "media", ...(isOwnProfile ? ["likes"] : [])].map((tab) => (
+                        {["posts", "media", ...(isCurrentProfile ? ["likes"] : [])].map((tab) => (
                             <button
                                 onClick={() => setActiveTab(tab)}
                                 key={tab}
@@ -151,7 +156,7 @@ const Profile = () => {
                     </div>
                 )}
 
-                {isOwnProfile && activeTab === "likes" && (
+                {isCurrentProfile && activeTab === "likes" && (
                     <div className="mt-6 flex flex-col items-center gap-6">
                         {likedPosts.length > 0 ? (
                             likedPosts.map((post) => (

@@ -127,7 +127,7 @@ const UserCard = ({ user }: UserProps) => {
             key={user._id}
             className="p-4 pt-6 flex flex-col justify-between w-72 shadow border border-gray-200 rounded-md max-md:mx-auto"
         >
-            <div className="text-center">
+            <div onClick={() => router.push(`/auth/profile/${user._id}`)} className="text-center cursor-pointer">
                 <Image
                     src={user.profile_picture}
                     alt=""
@@ -155,7 +155,6 @@ const UserCard = ({ user }: UserProps) => {
                 {/* FOLLOW BUTTON */}
                 <button
                     onClick={toggleFollow}
-                    // disabled={currentUser?.followers?.includes(user._id)}
                     disabled={followLoading}
                     className={`w-full py-2 rounded-md flex justify-center items-center gap-1 bg-linear-to-r
                         from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700

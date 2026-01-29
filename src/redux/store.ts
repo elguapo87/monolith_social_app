@@ -6,6 +6,7 @@ import messageReducer from "./slices/messageSlice"
 import notificationReducer from "./slices/notificationSlice";
 import commentReducer from "./slices/commentSlice";
 import storyReducer from "./slices/storySlice";
+import profileReducer from "./slices/profileSlice";
 
 export const store = configureStore({
     reducer: {  
@@ -15,7 +16,8 @@ export const store = configureStore({
         message: messageReducer,
         notifications: notificationReducer,
         comments: commentReducer,
-        story: storyReducer
+        story: storyReducer,
+        profile: profileReducer
     }
 });
 
