@@ -20,7 +20,7 @@ const CurrentProfile = () => {
     const currentUser = useSelector((state: RootState) => state.user.value);
     const currentUserId = currentUser?._id;
 
-    const { user, posts, loading, fetchUser } = useProfile(currentUserId as string);
+    const { posts, loading } = useProfile(currentUserId as string);
 
     const likedPosts = useSelector((state: RootState) => state.post.likedPosts);
     const dispatch = useDispatch<AppDispatch>();
@@ -28,6 +28,9 @@ const CurrentProfile = () => {
 
     const [activeTab, setActiveTab] = useState("posts");
     const [showEdit, setShowEdit] = useState(false);
+
+    const userData = posts[0]?.user
+
 
     useEffect(() => {
         if (activeTab !== "likes") return;
@@ -37,7 +40,15 @@ const CurrentProfile = () => {
         });
     }, [activeTab, dispatch, getToken]);
 
-    if (loading || !user) return <Loading />
+    if (loading) return <Loading />
+
+    if (!userData) {
+        return (
+            <p className="text-center text-slate-500">
+                This user has no posts yet.
+            </p>
+        );
+    }
 
     return (
         <div className="relative h-full overflow-y-scroll bg-gray-50 p-6">
@@ -48,10 +59,10 @@ const CurrentProfile = () => {
                     {/* COVER PHOTO */}
                     <div
                         className="relative h-40 md:h-56 bg-linear-to-r from-indigo-200
-                         via-purple-200 to-pink-200"
+                            via-purple-200 to-pink-200"
                     >
                         <Image
-                            src={user?.cover_photo || assets.image_placeholder}
+                            src={userData.cover_photo || assets.image_placeholder}
                             fill
                             alt="Cover Photo"
                             className="w-full h-full object-cover"
@@ -60,7 +71,7 @@ const CurrentProfile = () => {
 
                     {/* USER INFO */}
                     <UserProfileInfo
-                        user={user}
+                        user={currentUser}
                         posts={posts}
                         setShowEdit={setShowEdit}
                     />
@@ -155,7 +166,7 @@ const CurrentProfile = () => {
 
             {/* EFIT PROFILE MODAL */}
             {showEdit && (
-                <ProfileModal setShowEdit={setShowEdit} onUpdated={fetchUser} />
+                <ProfileModal setShowEdit={setShowEdit} />
             )}
         </div>
     )

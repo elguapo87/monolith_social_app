@@ -1,41 +1,24 @@
-import { getPosts } from "@/redux/slices/postSlice";
-import { getUserProfiles } from "@/redux/slices/userSlice";
+import { getUserPosts } from "@/redux/slices/postSlice";
+
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 export function useProfile(profileId: string) {
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
 
-    const profileUser = useSelector((state: RootState) => state.user.profileData);
-
     const posts = useSelector((state: RootState) => state.post.posts);
     const postsLoading = useSelector((state: RootState) => state.post.loading);
 
-    // fetch profile user
-    const fetchUser = useCallback(async () => {
+    useEffect(() => {
         if (!profileId) return;
 
-        const token = await getToken();
-
-        await dispatch(getUserProfiles({ profileId, token }));
-
-    }, [profileId, getToken, dispatch]);
-
-    useEffect(() => {
-        fetchUser();
-    }, [fetchUser]);
-
-    // ensure posts exist
-    useEffect(() => {
-        if (posts.length > 0) return;
-
         getToken().then((token) => {
-            dispatch(getPosts(token));
+            dispatch(getUserPosts({ profileId, token }));
         });
-    }, [posts.length, getToken, dispatch]);
+    }, [profileId, getToken, dispatch]);
 
     // derive profile posts
     const profilePosts = useMemo(
@@ -43,5 +26,5 @@ export function useProfile(profileId: string) {
         [posts, profileId]
     );
 
-    return { user: profileUser, posts: profilePosts, loading: postsLoading, fetchUser }
+    return { posts: profilePosts, loading: postsLoading }
 }

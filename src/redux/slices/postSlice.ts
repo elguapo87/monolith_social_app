@@ -68,6 +68,28 @@ export const getPosts = createAsyncThunk("post/getPosts", async (token: string |
     }
 });
 
+export const getUserPosts = createAsyncThunk("post/getUserPosts", async (
+    { profileId, token }: { profileId: string, token: string | null }, { rejectWithValue }
+) => {
+    try {
+        const { data } = await api.get("/post/getUserPosts", {
+            params: { profileId },
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            toast.error(data.message || "Failed to get user posts");
+            return rejectWithValue(data.message || "Failed to get user posts");
+        }
+
+        return data.posts as Post[];
+
+    } catch (error) {
+        toast.error("Failed to get user posts");
+        return rejectWithValue("Failed to get user posts");
+    }
+});
+
 export const toggleLike = createAsyncThunk("post/toggleLike", async ({ postId, token }: ToggleLikePayload, { rejectWithValue }) => {
     try {
         const { data } = await api.post("/post/like", { postId }, {
@@ -156,6 +178,27 @@ const postSlice = createSlice({
             state.loading = false;
             state.pendingLikeMap = {};
             state.likedPosts = [];
+        },
+        updateUserInPosts: (state, action) => {
+            const updatedUser = action.payload;
+
+            state.posts.forEach((post) => {
+                if (post.user._id === updatedUser._id) {
+                    post.user = {
+                        ...post.user,
+                        ...updatedUser,
+                    };
+                }
+            });
+
+            state.likedPosts.forEach((post) => {
+                if (post.user._id === updatedUser._id) {
+                    post.user = {
+                        ...post.user,
+                        ...updatedUser,
+                    };
+                }
+            });
         }
     },
     extraReducers: (builder) => {
@@ -169,6 +212,26 @@ const postSlice = createSlice({
             })
             .addCase(getPosts.rejected, (state) => {
                 state.loading = false;
+            })
+            .addCase(getUserPosts.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getUserPosts.fulfilled, (state, action) => {
+                state.loading = false;
+
+                const userPosts = action.payload;
+                userPosts.forEach((incoming) => {
+                    const index = state.posts.findIndex((p) => p._id === incoming._id);
+                    if (index !== -1) {
+                        state.posts[index] = incoming;
+                    } else {
+                        state.posts.push(incoming);
+                    }
+                })
+            })
+            .addCase(getUserPosts.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to get user posts");
             })
             .addCase(toggleLike.pending, (state, action) => {
                 const { postId, userId } = action.meta.arg as ToggleLikePayload;
@@ -303,13 +366,13 @@ const postSlice = createSlice({
                 state.loading = false;
                 state.likedPosts = action.payload;
             })
-            // .addCase(fetchLikedPosts.rejected, (state, action) => {
-            //     state.loading = false;
-            //     toast.error((action.payload as string) || "Failed to fetch liked posts");
-            // })
+        // .addCase(fetchLikedPosts.rejected, (state, action) => {
+        //     state.loading = false;
+        //     toast.error((action.payload as string) || "Failed to fetch liked posts");
+        // })
     }
 });
 
-export const { clearPosts } = postSlice.actions;
+export const { clearPosts, updateUserInPosts } = postSlice.actions;
 
 export default postSlice.reducer;

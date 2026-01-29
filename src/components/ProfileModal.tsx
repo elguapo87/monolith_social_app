@@ -1,19 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { assets } from "../../public/assets";
 import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import { fetchUser, updateProfile } from "@/redux/slices/userSlice";
+import { updateProfile } from "@/redux/slices/userSlice";
 import toast from "react-hot-toast";
 
 type ProfileProps = {
     setShowEdit: React.Dispatch<React.SetStateAction<boolean>>;
-    onUpdated?: () => void;
 };
 
-const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
+const ProfileModal = ({ setShowEdit }: ProfileProps) => {
 
     const { value: user, loading } = useSelector((state: RootState) => state.user);
     const { getToken } = useAuth();
@@ -49,7 +48,6 @@ const ProfileModal = ({ setShowEdit, onUpdated }: ProfileProps) => {
         try {
             await dispatch(updateProfile({ userData: formData, token }));
             setShowEdit(false);
-            onUpdated?.();
 
         } catch (error) {
             const errMessage = error instanceof Error ? error.message : "An unknown error occurred";

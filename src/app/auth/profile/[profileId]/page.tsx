@@ -20,7 +20,7 @@ const Profile = () => {
 
     const { profileId } = useParams() as { profileId: string };
 
-    const { user, posts, loading, fetchUser } = useProfile(profileId);
+    const { posts, loading } = useProfile(profileId);
 
     const likedPosts = useSelector((state: RootState) => state.post.likedPosts);
     const currentUser = useSelector((state: RootState) => state.user.value);
@@ -32,30 +32,40 @@ const Profile = () => {
 
     const isOwnProfile = currentUser?._id === profileId;
 
+    // const userData = posts[0]?.user;
+    const userData = isOwnProfile ? currentUser : posts[0]?.user;
+    
     useEffect(() => {
         if (!isOwnProfile) return;
         if (activeTab !== "likes") return;
-    
+
         getToken().then((token) => {
             dispatch(fetchLikedPosts(token));
         });
     }, [activeTab, isOwnProfile, dispatch, getToken]);
 
-    if (loading || !user) return <Loading />
+    if (loading) return <Loading />
+
+    if (!userData) {
+        return (
+            <p className="text-center text-slate-500">
+                This user has no posts yet.
+            </p>
+        );
+    }
 
     return (
         <div className="relative h-full overflow-y-scroll bg-gray-50 p-6">
             <div className="max-w-3xl mx-auto">
                 {/* PROFILE CARD */}
                 <div className="bg-white rounded-2xl shadow overflow-hidden">
-
                     {/* COVER PHOTO */}
                     <div
                         className="relative h-40 md:h-56 bg-linear-to-r from-indigo-200
-                         via-purple-200 to-pink-200"
+                            via-purple-200 to-pink-200"
                     >
                         <Image
-                            src={user?.cover_photo || assets.image_placeholder}
+                            src={userData.cover_photo || assets.image_placeholder}
                             fill
                             alt="Cover Photo"
                             className="w-full h-full object-cover"
@@ -64,7 +74,7 @@ const Profile = () => {
 
                     {/* USER INFO */}
                     <UserProfileInfo
-                        user={user}
+                        user={userData}
                         posts={posts}
                         setShowEdit={setShowEdit}
                     />
@@ -158,7 +168,7 @@ const Profile = () => {
 
             {/* EFIT PROFILE MODAL */}
             {showEdit && (
-                <ProfileModal setShowEdit={setShowEdit} onUpdated={fetchUser} />
+                <ProfileModal setShowEdit={setShowEdit} />
             )}
         </div>
     )
