@@ -5,20 +5,21 @@ import { assets } from "../../../../public/assets";
 import Image from "next/image";
 import { X, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import { createPost } from "@/redux/slices/postSlice";
 
 const CreatePost = () => {
 
     const [content, setContent] = useState("");
     const [images, setImages] = useState<File[]>([]);
-    const [loading, setLoading] = useState(false);
 
     const user = useSelector((state: RootState) => state.user.value);
     const { getToken } = useAuth();
+    const dispatch = useDispatch<AppDispatch>();
+    const loading = useSelector((state: RootState) => state.post.loading);
 
     const router = useRouter();
 
@@ -28,38 +29,25 @@ const CreatePost = () => {
             return;
         }
 
-        setLoading(true);
-
         const token = await getToken();
+        if (!token) return;
+
+        const formData = new FormData();
+        formData.append("content", content);
+
+        images.forEach((file) => {
+            formData.append("images", file);
+        });
 
         try {
-            const formData = new FormData();
-            formData.append("content", content);
+            await dispatch(
+                createPost({ postData: formData, token })
+            ).unwrap();
 
-            if (images.length) {
-                for (const file of images) {
-                    formData.append("images", file);
-                }
-            }
-
-            const { data } = await api.post("/post/addPost", formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (data.success) {
-                router.push("/");
-                // toast.success(data.message);
-
-            } else {
-                toast.error(data.message);
-            }
+            router.push("/");
 
         } catch (error) {
-            const errMessage = error instanceof Error ? error.message : "An unknown error occurred";
-            toast.error(errMessage);
-
-        } finally {
-            setLoading(false);
+            console.error(error);
         }
     };
 
@@ -76,12 +64,12 @@ const CreatePost = () => {
                 <div className="max-w-xl bg-white p-4 sm:p-8 sm:pb-3 rounded-xl shadow-md space-y-4">
                     {/* HEADER */}
                     <div className="flex items-center gap-3">
-                        <Image 
-                            src={user?.profile_picture || assets.avatar_icon} 
+                        <Image
+                            src={user?.profile_picture || assets.avatar_icon}
                             alt=""
                             width={48}
-                            height={48} 
-                            className="size-12 rounded-full shadow" 
+                            height={48}
+                            className="size-12 rounded-full shadow"
                         />
                         <div>
                             <h2 className="font-semibold">{user?.full_name}</h2>
