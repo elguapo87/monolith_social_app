@@ -217,10 +217,12 @@ const UserProfileInfo = ({ user, posts, setShowEdit }: ProfileProps) => {
 
           <p className="text-gray-700 text-sm max-w-md mt-4">{user?.bio}</p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 mt-4">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="w-4 h-4" />
-              {user?.location ? user.location : "Add location"}
-            </span>
+            {user?.location && (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="w-4 h-4" />
+                {user?.location}
+              </span>
+            )}
 
             <span className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4" />
