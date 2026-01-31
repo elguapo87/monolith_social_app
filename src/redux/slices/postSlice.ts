@@ -207,8 +207,8 @@ const postSlice = createSlice({
                 state.loading = true;
             })
             .addCase(getPosts.fulfilled, (state, action) => {
-                state.posts = action.payload;
                 state.loading = false;
+                state.posts = action.payload;
             })
             .addCase(getPosts.rejected, (state) => {
                 state.loading = false;
