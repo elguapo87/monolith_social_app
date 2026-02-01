@@ -48,6 +48,26 @@ const initialState: PostState = {
     likedPosts: [],
 };
 
+export const addPost = createAsyncThunk("post/addPost", async (
+    { postData, token }: { postData: FormData, token: string | null }, { rejectWithValue }
+) => {
+    try {
+        const { data } = await api.post("/post/addPost", postData, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue(data.message || "Failed to create post");
+        }
+
+        return { message: data.message }
+
+    } catch (error) {
+        toast.error("Failed to create post");
+        return rejectWithValue("Failed to create post");
+    }
+})
+
 export const getPosts = createAsyncThunk("post/getPosts", async (token: string | null, { rejectWithValue }) => {
     try {
         const { data } = await api.get("/post/getPosts", {
@@ -203,6 +223,17 @@ const postSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            .addCase(addPost.pending, (state) => {
+                state.loading = false;
+            })
+            .addCase(addPost.fulfilled, (state, action) => {
+                state.loading = false;
+                toast.success(action.payload.message);
+            })
+            .addCase(addPost.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to create post");
+            })
             .addCase(getPosts.pending, (state) => {
                 state.loading = true;
             })

@@ -5,11 +5,11 @@ import { assets } from "../../../../public/assets";
 import Image from "next/image";
 import { X, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
-import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import { addPost } from "@/redux/slices/postSlice";
 
 const CreatePost = () => {
 
@@ -19,6 +19,7 @@ const CreatePost = () => {
 
     const user = useSelector((state: RootState) => state.user.value);
     const { getToken } = useAuth();
+    const dispatch = useDispatch<AppDispatch>();
 
     const router = useRouter();
 
@@ -42,25 +43,13 @@ const CreatePost = () => {
                 }
             }
 
-            const { data } = await api.post("/post/addPost", formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (data.success) {
-                router.push("/");
-                toast.success(data.message);
-
-            } else {
-                toast.error(data.message);
-            }
+            dispatch(addPost({ postData: formData, token }));
+            router.push("/");
 
         } catch (error) {
             const errMessage = error instanceof Error ? error.message : "An unknown error occurred";
             toast.error(errMessage);
-
-        } finally {
-            setLoading(false);
-        }
+        } 
     };
 
     return (
