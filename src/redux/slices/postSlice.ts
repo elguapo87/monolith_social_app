@@ -224,7 +224,7 @@ const postSlice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(addPost.pending, (state) => {
-                state.loading = false;
+                state.loading = true;
             })
             .addCase(addPost.fulfilled, (state, action) => {
                 state.loading = false;
