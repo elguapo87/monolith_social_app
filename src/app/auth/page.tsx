@@ -1,6 +1,5 @@
 "use client"
 
-import Loading from "@/components/Loading";
 import StoriesBar from "@/components/StoriesBar"
 import { useEffect } from "react";
 import PostCard from "@/components/PostCard";
@@ -12,7 +11,6 @@ import { getPosts } from "@/redux/slices/postSlice";
 
 const Feed = () => {
   const feeds = useSelector((state: RootState) => state.post.posts);
-  const loading = useSelector((state: RootState) => state.post.loading);
 
   const dispatch = useDispatch<AppDispatch>();
   const { getToken } = useAuth();
@@ -26,7 +24,7 @@ const Feed = () => {
     fetchFeeds();
   }, [dispatch, getToken]);
 
-  return !loading ? (
+  return (
     <div
       className="h-full overflow-y-scroll no-scrollbar py-10 xl:pr-5 flex items-start justify-center xl:gap-8"
     >
@@ -46,9 +44,7 @@ const Feed = () => {
         <RecentMessages />
       </div>
     </div>
-  ) : (
-    <Loading />
-  )
+  ) 
 }
 
 export default Feed

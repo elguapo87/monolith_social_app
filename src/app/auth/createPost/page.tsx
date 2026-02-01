@@ -48,7 +48,7 @@ const CreatePost = () => {
 
             if (data.success) {
                 router.push("/");
-                // toast.success(data.message);
+                toast.success(data.message);
 
             } else {
                 toast.error(data.message);
