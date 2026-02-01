@@ -15,9 +15,9 @@ const CreatePost = () => {
 
     const [content, setContent] = useState("");
     const [images, setImages] = useState<File[]>([]);
-    const [loading, setLoading] = useState(false);
-
+    
     const user = useSelector((state: RootState) => state.user.value);
+    const loading = useSelector((state: RootState) => state.post.loading);
     const { getToken } = useAuth();
     const dispatch = useDispatch<AppDispatch>();
 
@@ -28,8 +28,6 @@ const CreatePost = () => {
             toast.error("Please add at least one image or text");
             return;
         }
-
-        setLoading(true);
 
         const token = await getToken();
 
