@@ -17,14 +17,14 @@ const Messages = () => {
     const { getToken } = useAuth();
 
     const router = useRouter();
-    
+
     useEffect(() => {
         const getConnections = async () => {
             const token = await getToken();
             dispatch(fetchConnections(token));
         }
         getConnections();
-    }, []);
+    }, [getToken, dispatch]);
 
     return (
         <div className="min-h-screen relative bg-slate-50">
@@ -37,46 +37,52 @@ const Messages = () => {
 
                 {/* CONNECTED USERS */}
                 <div className="flex flex-col gap-3">
-                    {connections.map((user) => (
-                        <div 
-                            key={user?.user?._id} 
-                            className="max-w-xl flex flex-wrap gap-5 p-6 bg-white shadow rounded-md"
-                        >
-                            <Image
-                                src={user?.user?.profile_picture || assets.avatar_icon}
-                                width={48}
-                                height={48}
-                                alt=""
-                                className="rounded-full aspect-square size-12 mx-auto"
-                            />
+                    {!connections.length ? (
+                        <p className="text-slate-500 text-lg">No conversations yet</p>
+                    ) : (
+                        <>
+                            {connections.map((conn) => (
+                                <div
+                                    key={conn?.user?._id}
+                                    className="max-w-xl flex flex-wrap gap-5 p-6 bg-white shadow rounded-md"
+                                >
+                                    <Image
+                                        src={conn?.user?.profile_picture || assets.avatar_icon}
+                                        width={48}
+                                        height={48}
+                                        alt=""
+                                        className="rounded-full aspect-square size-12 mx-auto"
+                                    />
 
-                            <div className="flex-1">
-                                <p className="font-medium text-slate-700">{user?.user?.full_name}</p>
-                                <p className="text-slate-500">@{user?.user?.user_name}</p>
-                                <p className="text-sm text-slate-600">{user?.user?.bio}</p>
-                            </div>
+                                    <div className="flex-1">
+                                        <p className="font-medium text-slate-700">{conn?.user?.full_name}</p>
+                                        <p className="text-slate-500">@{conn?.user?.user_name}</p>
+                                        <p className="text-sm text-slate-600">{conn?.user?.bio}</p>
+                                    </div>
 
-                            <div className="flex flex-col gap-2 mt-4">
-                                <button
-                                    onClick={() => router.push(`/auth/chatBox/${user?.user?._id}`)}
-                                    className="size-10 flex items-center justify-center text-sm rounded
+                                    <div className="flex flex-col gap-2 mt-4">
+                                        <button
+                                            onClick={() => router.push(`/auth/chatBox/${conn?.user?._id}`)}
+                                            className="size-10 flex items-center justify-center text-sm rounded
                                      bg-slate-100 hover:bg-slate-200 text-slate-800
                                       active:scale-95 transition cursor-pointer gap-1"
-                                >
-                                    <MessageSquare className="w-4 h-4" />
-                                </button>
+                                        >
+                                            <MessageSquare className="w-4 h-4" />
+                                        </button>
 
-                                <button
-                                    onClick={() => router.push(`/auth/profile/${user?.user?._id}`)}
-                                    className="size-10 flex items-center justify-center text-sm rounded
+                                        <button
+                                            onClick={() => router.push(`/auth/profile/${conn?.user?._id}`)}
+                                            className="size-10 flex items-center justify-center text-sm rounded
                                      bg-slate-100 hover:bg-slate-200 text-slate-800
                                       active:scale-95 transition cursor-pointer"
-                                >
-                                    <Eye className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    )}
                 </div>
             </div>
         </div>
