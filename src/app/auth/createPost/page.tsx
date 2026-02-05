@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { addPost } from "@/redux/slices/postSlice";
+import { addPost, getPosts } from "@/redux/slices/postSlice";
 
 const CreatePost = () => {
 
@@ -43,6 +43,7 @@ const CreatePost = () => {
 
             dispatch(addPost({ postData: formData, token }));
             router.push("/");
+            dispatch(getPosts(token));
 
         } catch (error) {
             const errMessage = error instanceof Error ? error.message : "An unknown error occurred";

@@ -51,13 +51,13 @@ const Profile = () => {
         return <p>User not found</p>;
     }
 
-    if (!userData) {
-        return (
-            <p className="text-center text-slate-500">
-                This user has no posts yet.
-            </p>
-        );
-    }
+    // if (!userData) {
+    //     return (
+    //         <p className="text-center text-slate-500">
+    //             This user has no posts yet.
+    //         </p>
+    //     );
+    // }
 
     return (
         <div className="relative h-full overflow-y-scroll bg-gray-50 p-6">

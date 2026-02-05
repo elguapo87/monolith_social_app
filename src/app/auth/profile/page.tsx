@@ -42,13 +42,13 @@ const CurrentProfile = () => {
 
     if (loading) return <Loading />
 
-    if (!userData) {
-        return (
-            <p className="text-center text-slate-500">
-                This user has no posts yet.
-            </p>
-        );
-    }
+    // if (!userData) {
+    //     return (
+    //         <p className="text-center text-slate-500">
+    //             This user has no posts yet.
+    //         </p>
+    //     );
+    // }
 
     return (
         <div className="relative h-full overflow-y-scroll bg-gray-50 p-6">
@@ -62,7 +62,7 @@ const CurrentProfile = () => {
                             via-purple-200 to-pink-200"
                     >
                         <Image
-                            src={userData.cover_photo || assets.image_placeholder}
+                            src={userData?.cover_photo || assets.image_placeholder}
                             fill
                             alt="Cover Photo"
                             className="w-full h-full object-cover"
