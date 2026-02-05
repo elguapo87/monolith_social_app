@@ -70,7 +70,7 @@ const Profile = () => {
                             via-purple-200 to-pink-200"
                     >
                         <Image
-                            src={userData.cover_photo || assets.image_placeholder}
+                            src={userData?.cover_photo || assets.image_placeholder}
                             fill
                             alt="Cover Photo"
                             className="w-full h-full object-cover"
