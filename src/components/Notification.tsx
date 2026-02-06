@@ -1,13 +1,11 @@
-import api from '@/lib/axios';
 import { useAuth } from '@clerk/nextjs';
 import { Bell } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react'
-import toast from 'react-hot-toast';
 import { assets } from '../../public/assets';
 import { useDispatch, useSelector } from 'react-redux';
-import { setNotifications } from '@/redux/slices/notificationSlice';
+import { fetchRecentConversations } from '@/redux/slices/notificationSlice';
 import { AppDispatch, RootState } from '@/redux/store';
 import moment from 'moment';
 
@@ -17,12 +15,9 @@ type SidebarProps = {
 }
 
 const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
-
-    const { getToken } = useAuth();
-
-    const unreadMessages = useSelector((state: RootState) => state.notifications.items || []);
-    const userId = useSelector((state: RootState) => state.user.value?._id);
     const dispatch = useDispatch<AppDispatch>();
+    const { getToken } = useAuth();
+    const { unread: unreadMessages } = useSelector((state: RootState) => state.notifications);
 
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -31,41 +26,21 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const totalUnread = unreadMessages.reduce((sum, msg) => sum + msg.unread_count, 0);
 
     useEffect(() => {
-        if (!userId) return;
-        if (!showMenu && !sidebarOpen) return;
+        getToken().then((token) => {
+            dispatch(fetchRecentConversations(token));
+        });
 
-        const fetchRecentConversations = async () => {
-            try {
-                const token = await getToken();
-                if (!token) return;
-
-                const { data } = await api.get("/message/getUserRecentMessages", {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (data.success) {
-                    const unreadOnly = data.recent_messages.filter(
-                        (c: { unread_count: number }) => c.unread_count > 0
-                    );
-                    dispatch(setNotifications(unreadOnly));
-                }
-            } catch {
-                // Optional: suppress toast during hydration
-            }
-        };
-
-        fetchRecentConversations();
-    }, [userId, showMenu, sidebarOpen]);
+    }, [getToken, dispatch]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
                 setShowMenu(false);
             }
-        };
+        }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+    }, [showMenu]);
 
     const handleOpenChat = (userId: string) => {
         router.push(`/auth/chatBox/${userId}`);
@@ -130,7 +105,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                         <span
                                             className='text-xs text-gray-400'
                                         >
-                                            {moment(msg.latest_created_at).fromNow()}
+                                            {moment(msg.last_message_date).fromNow()}
                                         </span>
                                     </div>
                                     <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">

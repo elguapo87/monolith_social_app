@@ -24,6 +24,11 @@ interface MessageState {
     loading: boolean;
 }
 
+interface AddMessagePayload {
+    messageData: FormData;
+    token: string | null;
+}
+
 const initialState: MessageState = {
     messages: [],
     loading: false,
@@ -48,6 +53,26 @@ export const fetchMessages = createAsyncThunk("message/getMessages", async ({ to
     }
 });
 
+export const addMessage = createAsyncThunk("message/addMessage", async (
+    { messageData, token }: AddMessagePayload, { rejectWithValue }
+) => {
+    try {
+        const { data } = await api.post("/message/addMessage", messageData, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue(data.message || "Failed to add message");
+        }
+
+        return data.message;
+
+    } catch (error) {
+        toast.error("Failed add message");;
+        return rejectWithValue("Failed add message");
+    }
+});
+
 const messageSlice = createSlice({
     name: "message",
     initialState,
@@ -55,7 +80,7 @@ const messageSlice = createSlice({
         setMessages: (state, action) => {
             state.messages = action.payload;
         },
-        addMessage: (state, action) => {
+        addMessagePayload: (state, action) => {
             state.messages = [...state.messages, action.payload]
         },
         resetMessages: (state) => {
@@ -74,9 +99,23 @@ const messageSlice = createSlice({
             .addCase(fetchMessages.rejected, (state) => {
                 state.loading = false;
             })
+            .addCase(addMessage.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(addMessage.fulfilled, (state, action) => {
+                state.loading = false;
+                state.messages = [
+                    ...state.messages,
+                    action.payload
+                ];
+            })
+            .addCase(addMessage.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to add message");
+            })
     }
 })
 
-export const { setMessages, addMessage, resetMessages } = messageSlice.actions;
+export const { setMessages, addMessagePayload, resetMessages } = messageSlice.actions;
 
 export default messageSlice.reducer;

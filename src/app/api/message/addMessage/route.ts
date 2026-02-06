@@ -82,12 +82,6 @@ export async function POST(req: Request) {
             messagePayload
         );
 
-        await pusherServer.trigger(
-            `user-${user._id}`,
-            "new-message",
-            messagePayload
-        );
-
         // Build notification payload
         const notificationPayload = {
             from_user_id: user._id,

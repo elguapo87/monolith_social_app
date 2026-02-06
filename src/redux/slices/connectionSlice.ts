@@ -24,6 +24,7 @@ export interface ConnectionState {
     following: ConnectionItem[];
     pendingConnections: ConnectionItem[]
     pendingSent: ConnectionItem[];
+    connectionUser: UserData | null;
     loading: boolean;
 }
 
@@ -38,6 +39,7 @@ const initialState: ConnectionState = {
     following: [],
     pendingConnections: [],
     pendingSent: [],
+    connectionUser: null,
     loading: false
 }
 
@@ -161,6 +163,26 @@ export const deleteConnection = createAsyncThunk("connection/deleteConnection", 
     }
 });
 
+export const getConnectioUser = createAsyncThunk("connection/getConnection", async (
+    { otherUserId, token }: { otherUserId: string, token: string | null }, { rejectWithValue }
+) => {
+    try {
+        const { data } = await api.post("/connection/getConnection", { otherUserId }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (data.success && data.user) {
+            return data.user;
+        }
+
+        return rejectWithValue(data.message || "Failed to get connection user")
+
+    } catch (error) {
+        toast.error("Failed to get connection user");;
+        return rejectWithValue("Failed to get connection user");
+    }
+})
+
 const connectionSlice = createSlice({
     name: "connection",
     initialState,
@@ -251,6 +273,17 @@ const connectionSlice = createSlice({
             .addCase(deleteConnection.rejected, (state, action) => {
                 state.loading = true;
                 toast.error((action.payload as string) || "Failed delete connection");
+            })
+            .addCase(getConnectioUser.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getConnectioUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.connectionUser = action.payload;
+            })
+            .addCase(getConnectioUser.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed get connection user");
             })
     }
 })
