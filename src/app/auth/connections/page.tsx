@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react'
 import { assets } from '../../../../public/assets';
 import { Check, CircleX, MessageSquare, Plus, UserCheck, UserPlus, UserRoundPen, Users, X } from 'lucide-react';
@@ -44,6 +44,15 @@ const Connections = () => {
     const [acceptLoading, setAcceptLoading] = useState(false);
     const [declineLoading, setDeclineLoading] = useState(false);
     const [removeLoading, setRemoveLoading] = useState(false);
+
+    const searchParams = useSearchParams();
+    const tabFromUrl = searchParams.get("tab");
+
+    useEffect(() => {
+        if (tabFromUrl) {
+            setCurrentTab(tabFromUrl);
+        }
+    }, [tabFromUrl]);
 
     useEffect(() => {
         getToken().then((token) => {

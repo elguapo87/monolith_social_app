@@ -70,7 +70,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     };
 
     const handleOpenConnections = () => {
-        router.push("/auth/connections")
+        router.push("/auth/connections?tab=Incoming");
         setShowMenu(false);
         if (setSidebarOpen) {
             setSidebarOpen(false);
@@ -107,7 +107,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         </p>
                     )}
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col md:gap-2">
                         {notifications.map((notification) => {
                             if (notification.type === "message") {
                                 const msg = notification.payload;
