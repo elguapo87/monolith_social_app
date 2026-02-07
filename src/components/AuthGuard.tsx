@@ -121,8 +121,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         });
 
         channel.bind("new-notification", (data: NotificationItem) => {
-            const isOnChatPage =
-                pathnameRef.current === `/auth/chatBox/${data.from_user_id}`;
+            const isOnChatPage = pathnameRef.current === `/auth/chatBox/${data.from_user_id}`;
 
             if (!isOnChatPage) {
                 dispatch(addOrUpdateNotification(data));
@@ -130,11 +129,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         });
 
         channel.bind("connection-request", (payload: RealtimeConnectionRequest) => {
-            const isOnConnectionsPage =
-                pathnameRef.current.startsWith("/auth/connections");
-            if (!isOnConnectionsPage) {
-                dispatch(addPendingConnection(payload));
-            }
+            // const isOnConnectionsPage =
+            //     pathnameRef.current.startsWith("/auth/connections");
+            // if (!isOnConnectionsPage) {
+            // }
+            dispatch(addPendingConnection(payload));
         });
 
         return () => {

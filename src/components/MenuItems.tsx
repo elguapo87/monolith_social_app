@@ -30,8 +30,7 @@ const MenuItems = ({ setSidebarOpen }: SidebarProps) => {
     <div className="relative px-6 text-gray-600 space-y-1 font-medium">
       {menuItemsData.map(({ to, label, Icon }) => {
         const isActive = pathName === to;
-        const isConnections = to === "/auth/connections";
-
+    
         return (
           <Link
             onClick={() => setSidebarOpen(false)}
@@ -42,10 +41,6 @@ const MenuItems = ({ setSidebarOpen }: SidebarProps) => {
           >
             <Icon className="w-5 h-5" />
             {label}
-
-            {isConnections && (
-              <ConnectionNotification />
-            )}
           </Link>
         )
       })}

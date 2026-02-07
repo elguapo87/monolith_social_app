@@ -59,11 +59,13 @@ export async function POST(req: Request) {
 
             // Fire realtime notification (this MUST succeed fast)
             await pusherServer.trigger(`user-${id}`, "connection-request", {
-                _id: newConnection._id,
-                from_user_id: newConnection.from_user_id,
-                to_user_id: { _id: id },
-                status: "pending",
-                createdAt: newConnection.createdAt
+                connectionId: newConnection._id.toString(),
+                type: "pending",
+                user: {
+                    _id: newConnection.from_user_id._id,
+                    full_name: newConnection.from_user_id.full_name,
+                    profile_picture: newConnection.from_user_id.profile_picture
+                }
             });
 
             return NextResponse.json({ success: true, message: "Connection request sent", connection: newConnection });
