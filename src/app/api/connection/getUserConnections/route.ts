@@ -16,6 +16,7 @@ interface UserData {
 interface User {
     user: UserData,
     connectionId?: string;
+    createdAt?: Date;
     type: "follower" | "following" | "pending_sent" | "pending_received" | "connection";
 };
 

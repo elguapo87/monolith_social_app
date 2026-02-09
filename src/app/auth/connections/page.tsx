@@ -183,8 +183,8 @@ const Connections = () => {
                                 onClick={() => setCurrentTab(tab.label)}
                                 className={`mx-auto flex flex-col items-center justify-center gap-1 border
                                     h-20 w-40 border-gray-200 shadow rounded-md cursor-pointer
-                                    ${currentTab === tab.label 
-                                        ? "bg-stone-100 border-gray-300 font-medium text-black" 
+                                    ${currentTab === tab.label
+                                        ? "bg-stone-100 border-gray-300 font-medium text-black"
                                         : "bg-white text-gray-600"}`}
                             >
                                 <b>{tab.value?.length}</b>
@@ -199,29 +199,36 @@ const Connections = () => {
                     className="max-md:hidden inline-flex flex-wrap items-center border border-gray-200
                      rounded-md p-1 bg-white shadow-sm"
                 >
-                    {dataArray.map((tab) => (
-                        <button
-                            key={tab.label}
-                            onClick={() => setCurrentTab(tab.label)}
-                            className={`flex items-center px-3 py-1 text-sm rounded-md transition-colors
-                                cursor-pointer ${currentTab === tab.label ?
-                                    "bg-white font-medium text-black" :
-                                    "text-gray-500 hover:text-black"
-                                }`}
-                        >
-                            <tab.icon className="w-4 h-4" />
-                            <span className="ml-1">{tab.label}</span>
+                    {dataArray.map((tab) => {
+                        const isIncomingTab = tab.label === "Incoming" && pendingConnections.length > 0;
 
-                            {tab.value?.length !== undefined && (
-                                <span
-                                    className="ml-2 text-xs bg-gray-100 text-gray-700 px-2
-                                        py-0.5 rounded-full"
-                                >
-                                    {tab.value.length}
-                                </span>
-                            )}
-                        </button>
-                    ))}
+                        return (
+                            <button
+                                key={tab.label}
+                                onClick={() => setCurrentTab(tab.label)}
+                                className={`flex items-center px-3 py-1 text-sm rounded-md transition-colors
+                                    cursor-pointer ${currentTab === tab.label ?
+                                        "bg-white font-medium text-black" :
+                                        "text-gray-500 hover:text-black"
+                                    }`}
+                            >
+                                <tab.icon className="w-4 h-4" />
+                                <span className="ml-1">{tab.label}</span>
+
+                                {tab.value?.length !== undefined && (
+                                    <span
+                                        className={`ml-2 text-xs px-2 py-0.5 rounded-full 
+                                            ${isIncomingTab 
+                                                ? "bg-red-500 text-white"
+                                                : "bg-gray-100 text-gray-700"
+                                            }`}
+                                    >
+                                        {tab.value.length}
+                                    </span>
+                                )}
+                            </button>
+                        )
+                    })}
                 </div>
 
                 {/* CONNECTIONS */}

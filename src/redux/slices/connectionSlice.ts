@@ -15,6 +15,7 @@ interface UserData {
 export interface ConnectionItem {
     user: UserData;
     connectionId?: string;
+    createdAt: Date;
     type: "follower" | "following" | "pending_sent" | "pending_received" | "connection";
 }
 
@@ -25,6 +26,15 @@ export interface ConnectionState {
     pendingConnections: ConnectionItem[]
     pendingSent: ConnectionItem[];
     connectionUser: UserData | null;
+    declined: {
+        connectionId: string;
+        createdAt: Date;
+        user: {
+            _id: string;
+            full_name: string;
+            profile_picture: string;
+        };
+    }[];
     loading: boolean;
 }
 
@@ -40,6 +50,7 @@ const initialState: ConnectionState = {
     pendingConnections: [],
     pendingSent: [],
     connectionUser: null,
+    declined: [],
     loading: false
 }
 
@@ -201,6 +212,18 @@ const connectionSlice = createSlice({
             state.pendingConnections = state.pendingConnections.filter(
                 (c) => c.connectionId !== action.payload
             );
+        },
+
+        addDeclinedConnectionNotification: (state, action) => {
+            state.declined.unshift(action.payload);
+        },
+
+        removePendingSentConnection: (state, action) => {
+            state.pendingSent = state.pendingSent.filter((c) => c.connectionId !== action.payload);
+        },
+
+        clearDeclinedNotification: (state) => {
+            state.declined = [];
         }
     },
     extraReducers: (builder) => {
@@ -288,6 +311,12 @@ const connectionSlice = createSlice({
     }
 })
 
-export const { addPendingConnection, removePendingConnection } = connectionSlice.actions;
+export const { 
+    addPendingConnection, 
+    removePendingConnection,
+    addDeclinedConnectionNotification,
+    removePendingSentConnection,
+    clearDeclinedNotification 
+} = connectionSlice.actions;
 
 export default connectionSlice.reducer;

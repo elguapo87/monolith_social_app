@@ -1,3 +1,4 @@
+import { pusherServer } from "@/lib/pusher/server";
 import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
 import { NextResponse } from "next/server";
@@ -15,11 +16,26 @@ export async function POST(req: Request) {
             from_user_id: id,
             to_user_id: authUser._id,
             status: "pending"
-        });
+        })
+            .populate("to_user_id", "full_name profile_picture");
 
         if (!connection) {
             return NextResponse.json({ success: false, message: "Pending connection not found" }, { status: 404 });
         }
+
+        await pusherServer.trigger(
+            `user-${connection.from_user_id}`,
+            "connection-declined",
+            {
+                connectionId: connection._id,
+                createdAt: new Date().toISOString(),
+                user: {
+                    id: authUser._id,
+                    full_name: authUser.full_name,
+                    profile_picture: authUser.profile_picture
+                }
+            }
+        );
 
         await connectionModel.deleteOne({ _id: connection._id });
 
