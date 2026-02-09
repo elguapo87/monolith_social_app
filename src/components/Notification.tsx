@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchRecentConversations } from '@/redux/slices/notificationSlice';
 import { AppDispatch, RootState } from '@/redux/store';
 import moment from 'moment';
-import { clearDeclinedNotification, fetchConnections } from '@/redux/slices/connectionSlice';
+import { clearAcceptedNotification, clearDeclinedNotification, fetchConnections } from '@/redux/slices/connectionSlice';
 
 type SidebarProps = {
     sidebarOpen?: boolean;
@@ -19,7 +19,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
     const { unread: unreadMessages } = useSelector((state: RootState) => state.notifications);
-    const { pendingConnections, declined } = useSelector((state: RootState) => state.connection);
+    const { pendingConnections, declined, accepted } = useSelector((state: RootState) => state.connection);
 
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -27,7 +27,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
     const totalUnread = unreadMessages.reduce((sum, msg) => sum + msg.unread_count, 0);
 
-    const totalNotifications = totalUnread + pendingConnections.length + declined.length;
+    const totalNotifications = totalUnread + pendingConnections.length + declined.length + accepted.length;
 
     const messageNotifications = unreadMessages.map((msg) => ({
         type: "message" as const,
@@ -50,10 +50,18 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         payload: conn
     }));
 
+    const acceptNotification = accepted.map((conn) => ({
+        type: "accept" as const,
+        id: conn.connectionId,
+        createdAt: conn.createdAt,
+        payload: conn
+    }));
+
     const notifications = [
         ...messageNotifications,
         ...connectionNotification,
-        ...declineNotification
+        ...declineNotification,
+        ...acceptNotification
     ].sort((a, b) =>
         new Date(a.createdAt).getTime() -
         new Date(b.createdAt).getTime()
@@ -93,8 +101,12 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         }
     }
 
-    const handleClearNotification = () => {
+    const handleClearDeclinedNotification = () => {
         dispatch(clearDeclinedNotification());
+    };
+    
+    const handleClearAcceptedNotification = () => {
+        dispatch(clearAcceptedNotification());
     };
 
     return (
@@ -219,7 +231,38 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
                                         <CircleCheckBig
                                             className='text-red-400 size-6'
-                                            onClick={handleClearNotification}
+                                            onClick={handleClearDeclinedNotification}
+                                        />
+                                    </div>
+                                )
+                            }
+
+                            if (notification.type === "accept") {
+                                const conn = notification.payload;
+
+                                return (
+                                    <div
+                                        key={`conn-${conn.connectionId}`}
+                                        className="flex items-center gap-3 p-2 rounded-lg
+                                            hover:bg-gray-100 transition cursor-pointer"
+                                    >
+                                        <Image
+                                            src={conn.user.profile_picture || assets.avatar_icon}
+                                            alt={conn.user.full_name}
+                                            width={40}
+                                            height={40}
+                                            className="rounded-full object-cover size-10"
+                                        />
+                                        <div className='flex-1 flex flex-col'>
+                                            <p className="font-medium text-sm text-gray-800">
+                                                {conn.user.full_name}
+                                            </p>
+                                            <p className='text-xs text-gray-500'>accepted connection request</p>
+                                        </div>
+
+                                        <CircleCheckBig
+                                            className='text-red-400 size-6'
+                                            onClick={handleClearAcceptedNotification}
                                         />
                                     </div>
                                 )

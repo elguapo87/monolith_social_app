@@ -1,3 +1,4 @@
+import { pusherServer } from "@/lib/pusher/server";
 import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
 import userModel from "@/models/userModel";
@@ -17,10 +18,26 @@ export async function POST(req: Request) {
             from_user_id: id, 
             to_user_id: authUser._id,
             status: "pending" 
-        });
+        })
+            .populate("to_user_id", "full_name profile_picture")
+
         if (!connection) {
             return NextResponse.json({ success: false, message: "Connection not found" });
         }
+
+        await pusherServer.trigger(
+            `user-${connection.from_user_id}`,
+            "connection-accepted",
+            {   
+                connectionId: connection._id,
+                createdAt: new Date().toISOString(),
+                user: {
+                    _id: authUser._id,
+                    full_name: authUser.full_name,
+                    profile_picture: authUser.profile_picture
+                }
+            }
+        );
 
         const user = await userModel.findById(authUser._id);
         user.connections.push(id);

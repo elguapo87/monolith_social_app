@@ -35,6 +35,15 @@ export interface ConnectionState {
             profile_picture: string;
         };
     }[];
+    accepted: {
+        connectionId: string;
+        createdAt: Date;
+        user: {
+            _id: string;
+            full_name: string;
+            profile_picture: string;
+        };
+    }[];
     loading: boolean;
 }
 
@@ -51,6 +60,7 @@ const initialState: ConnectionState = {
     pendingSent: [],
     connectionUser: null,
     declined: [],
+    accepted: [],
     loading: false
 }
 
@@ -224,6 +234,31 @@ const connectionSlice = createSlice({
 
         clearDeclinedNotification: (state) => {
             state.declined = [];
+        },
+
+        addAcceptedConnectionNotification: (state, action) => {
+            const exists = state.accepted.some((c) => c.connectionId === action.payload.connectionId);
+            if (!exists) {
+                state.accepted.unshift(action.payload);
+            }
+        },
+
+        finalizeAcceptedConnection: (state, action) => {
+            state.connections.unshift({
+                user: action.payload.user,
+                connectionId: action.payload.connectionId,
+                createdAt: action.payload.createdAt,
+                type: "connection",
+            });
+
+            const isPending = state.pendingSent.some((c) => c.user._id === action.payload.user._id);
+            if (isPending) {
+                state.pendingSent = state.pendingSent.filter((c) => c.user._id !== action.payload.user._id);
+            }
+        },
+
+        clearAcceptedNotification: (state) => {
+            state.accepted = [];
         }
     },
     extraReducers: (builder) => {
@@ -311,12 +346,15 @@ const connectionSlice = createSlice({
     }
 })
 
-export const { 
-    addPendingConnection, 
+export const {
+    addPendingConnection,
     removePendingConnection,
     addDeclinedConnectionNotification,
     removePendingSentConnection,
-    clearDeclinedNotification 
+    clearDeclinedNotification,
+    addAcceptedConnectionNotification,
+    finalizeAcceptedConnection,
+    clearAcceptedNotification
 } = connectionSlice.actions;
 
 export default connectionSlice.reducer;

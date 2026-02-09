@@ -8,7 +8,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { fetchUser } from "@/redux/slices/userSlice";
 import { addOrUpdateNotification, markAsSeen } from "@/redux/slices/notificationSlice";
-import { addDeclinedConnectionNotification, addPendingConnection, removePendingConnection, removePendingSentConnection } from "@/redux/slices/connectionSlice";
+import {
+    addAcceptedConnectionNotification,
+    addDeclinedConnectionNotification,
+    addPendingConnection,
+    finalizeAcceptedConnection,
+    removePendingSentConnection
+} from "@/redux/slices/connectionSlice";
 import { pusherClient } from "@/lib/pusher/client";
 import { addMessagePayload } from "@/redux/slices/messageSlice";
 
@@ -49,7 +55,7 @@ type RealtimeConnectionRequest = {
     createdAt: string;
 };
 
-type DeclinePayload = {
+type ConnectionPayload = {
     connectionId: string;
     user: {
         _id: string;
@@ -146,9 +152,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             dispatch(addPendingConnection(payload));
         });
 
-        channel.bind("connection-declined", (payload: DeclinePayload) => {
+        channel.bind("connection-declined", (payload: ConnectionPayload) => {
             dispatch(addDeclinedConnectionNotification(payload));
             dispatch(removePendingSentConnection(payload.connectionId));
+        });
+
+        channel.bind("connection-accepted", (payload: ConnectionPayload) => {
+            dispatch(addAcceptedConnectionNotification(payload));
+            dispatch(finalizeAcceptedConnection(payload));
         });
 
         return () => {
