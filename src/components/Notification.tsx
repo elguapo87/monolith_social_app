@@ -94,8 +94,9 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
             {showMenu && (
                 <div
-                    className="absolute top-full max-md:-right-20 md:right-0 mt-2 w-72 bg-white
-                        rounded-xl shadow-lg border border-gray-200 p-3 z-50"
+                    className={`absolute top-full max-md:-right-20 md:right-0 mt-2 w-72 bg-white
+                        rounded-xl shadow-lg border border-gray-200 p-3 z-50
+                        ${!sidebarOpen ? "max-md:-translate-x-1/8" : ""}`}
                 >
                     <p className="text-sm font-semibold text-gray-600 mb-2">
                         Notifications

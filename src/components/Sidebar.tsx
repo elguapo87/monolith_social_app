@@ -41,7 +41,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: AuthLayoutProps) => {
 
       <div className="w-full">
         <Image
-          onClick={() =>{ router.push("/auth"); setSidebarOpen(false); }}
+          onClick={() => { router.push("/auth"); setSidebarOpen(false); }}
           src={assets.monolith_logo}
           width={120}
           height={40}
