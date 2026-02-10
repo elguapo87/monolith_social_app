@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchRecentConversations } from '@/redux/slices/notificationSlice';
 import { AppDispatch, RootState } from '@/redux/store';
 import moment from 'moment';
-import { clearAcceptedNotification, clearDeclinedNotification, fetchConnections } from '@/redux/slices/connectionSlice';
+import { clearAcceptedNotification, clearDeclinedNotification, clearRemovedConnectionNotification, fetchConnections } from '@/redux/slices/connectionSlice';
 
 type SidebarProps = {
     sidebarOpen?: boolean;
@@ -19,7 +19,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const { getToken } = useAuth();
     const { unread: unreadMessages } = useSelector((state: RootState) => state.notifications);
-    const { pendingConnections, declined, accepted } = useSelector((state: RootState) => state.connection);
+    const { pendingConnections, declined, accepted, removed } = useSelector((state: RootState) => state.connection);
 
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -27,7 +27,8 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
     const totalUnread = unreadMessages.reduce((sum, msg) => sum + msg.unread_count, 0);
 
-    const totalNotifications = totalUnread + pendingConnections.length + declined.length + accepted.length;
+    const totalNotifications
+        = totalUnread + pendingConnections.length + declined.length + accepted.length + removed.length;
 
     const messageNotifications = unreadMessages.map((msg) => ({
         type: "message" as const,
@@ -57,11 +58,19 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         payload: conn
     }));
 
+    const removeNofitication = removed.map((conn) => ({
+        type: "remove" as const,
+        id: conn.connectionId,
+        createdAt: conn.createdAt,
+        payload: conn
+    }));
+
     const notifications = [
         ...messageNotifications,
         ...connectionNotification,
         ...declineNotification,
-        ...acceptNotification
+        ...acceptNotification,
+        ...removeNofitication
     ].sort((a, b) =>
         new Date(a.createdAt).getTime() -
         new Date(b.createdAt).getTime()
@@ -104,9 +113,13 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const handleClearDeclinedNotification = () => {
         dispatch(clearDeclinedNotification());
     };
-    
+
     const handleClearAcceptedNotification = () => {
         dispatch(clearAcceptedNotification());
+    };
+
+    const handleClearRemoveNotification = () => {
+        dispatch(clearRemovedConnectionNotification());
     };
 
     return (
@@ -149,7 +162,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     <div
                                         key={`msg-${notification.id}`}
                                         onClick={() => handleOpenChat(msg.user._id)}
-                                        className="flex items-center gap-3 p-2 rounded-lg
+                                        className="flex items-start gap-3 p-2 rounded-lg
                                             hover:bg-gray-100 transition cursor-pointer"
                                     >
                                         <Image
@@ -183,7 +196,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     <div
                                         key={`conn-${notification.id}`}
                                         onClick={handleOpenConnections}
-                                        className="flex items-center gap-3 p-2 rounded-lg
+                                        className="flex items-start gap-3 p-2 rounded-lg
                                             hover:bg-gray-100 transition cursor-pointer"
                                     >
                                         <Image
@@ -201,6 +214,9 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                             <p className="font-medium text-sm text-gray-800">
                                                 {conn.user.full_name}
                                             </p>
+                                            <span className='text-xs text-gray-400'>
+                                                {moment(conn.createdAt).fromNow()}
+                                            </span>
                                         </div>
                                     </div>
                                 );
@@ -212,7 +228,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 return (
                                     <div
                                         key={`conn-${conn.connectionId}`}
-                                        className="flex items-center gap-3 p-2 rounded-lg
+                                        className="flex items-start gap-3 p-2 rounded-lg
                                             hover:bg-gray-100 transition cursor-pointer"
                                     >
                                         <Image
@@ -227,10 +243,14 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                                 {conn.user.full_name}
                                             </p>
                                             <p className='text-xs text-gray-500'>rejected connection request</p>
+
+                                            <span className='text-xs text-gray-400'>
+                                                {moment(conn.createdAt).fromNow()}
+                                            </span>
                                         </div>
 
                                         <CircleCheckBig
-                                            className='text-red-400 size-6'
+                                            className='text-red-400 size-6 self-center'
                                             onClick={handleClearDeclinedNotification}
                                         />
                                     </div>
@@ -243,7 +263,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 return (
                                     <div
                                         key={`conn-${conn.connectionId}`}
-                                        className="flex items-center gap-3 p-2 rounded-lg
+                                        className="flex items-start gap-3 p-2 rounded-lg
                                             hover:bg-gray-100 transition cursor-pointer"
                                     >
                                         <Image
@@ -258,11 +278,52 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                                 {conn.user.full_name}
                                             </p>
                                             <p className='text-xs text-gray-500'>accepted connection request</p>
+
+                                            <span className='text-xs text-gray-400'>
+                                                {moment(conn.createdAt).fromNow()}
+                                            </span>
                                         </div>
 
                                         <CircleCheckBig
-                                            className='text-red-400 size-6'
+                                            className='text-red-400 size-6 self-center'
                                             onClick={handleClearAcceptedNotification}
+                                        />
+                                    </div>
+                                )
+                            }
+
+                            if (notification.type === "remove") {
+                                const conn = notification.payload;
+
+                                return (
+                                    <div
+                                        key={`conn-${conn.connectionId}`}
+                                        className="flex items-start gap-3 p-2 rounded-lg
+                                            hover:bg-gray-100 transition cursor-pointer"
+                                    >
+                                        <Image
+                                            src={conn.user.profile_picture || assets.avatar_icon}
+                                            alt={conn.user.full_name}
+                                            width={40}
+                                            height={40}
+                                            className="rounded-full object-cover size-10"
+                                        />
+                                        <div className='flex-1 flex flex-col'>
+                                            <p className="font-medium text-sm text-gray-800">
+                                                {conn.user.full_name}
+                                            </p>
+                                            <p className='text-xs text-gray-500'>
+                                                removed you from connections
+                                            </p>
+
+                                            <span className='text-xs text-gray-400'>
+                                                {moment(conn.createdAt).fromNow()}
+                                            </span>
+                                        </div>
+
+                                        <CircleCheckBig
+                                            className='text-red-400 size-6 self-center'
+                                            onClick={handleClearRemoveNotification}
                                         />
                                     </div>
                                 )

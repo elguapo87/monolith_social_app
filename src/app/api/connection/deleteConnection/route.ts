@@ -1,3 +1,4 @@
+import { pusherServer } from "@/lib/pusher/server";
 import { protectUser } from "@/middleware/userAuth";
 import connectionModel from "@/models/connectionModel";
 import messageModel from "@/models/messageModel";
@@ -13,10 +14,33 @@ export async function POST(req: Request) {
 
         const { connectionId } = await req.json();
 
-        const connection = await connectionModel.findById(connectionId);
+        const connection = await connectionModel
+            .findById(connectionId)
+            .populate("from_user_id", "full_name profile_picture")
+            .populate("to_user_id", "full_name profile_picture");
+
+
         if (!connection) return NextResponse.json({ success: false, message: "Connection not found" }, { status: 404 });
 
         const { from_user_id, to_user_id } = connection;
+
+        const recipient = connection.from_user_id._id.toString() === authUser._id.toString()
+            ? connection.to_user_id
+            : connection.from_user_id;
+
+        await pusherServer.trigger(
+            `user-${recipient._id}`,
+            "connection-removed",
+            {
+                connectionId,
+                user: {
+                    _id: authUser._id,
+                    full_name: authUser.full_name,
+                    profile_picture: authUser.profile_picture
+                },
+                createdAt: new Date().toISOString()
+            }
+        );
 
         // Remove each other from connections array
         await userModel.updateOne({ _id: from_user_id }, { $pull: { connections: to_user_id } });

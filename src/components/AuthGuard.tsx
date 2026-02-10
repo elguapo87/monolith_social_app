@@ -12,7 +12,9 @@ import {
     addAcceptedConnectionNotification,
     addDeclinedConnectionNotification,
     addPendingConnection,
+    addRemovedConnectionNotification,
     finalizeAcceptedConnection,
+    finalizeRemovedConnection,
     removePendingSentConnection
 } from "@/redux/slices/connectionSlice";
 import { pusherClient } from "@/lib/pusher/client";
@@ -160,6 +162,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         channel.bind("connection-accepted", (payload: ConnectionPayload) => {
             dispatch(addAcceptedConnectionNotification(payload));
             dispatch(finalizeAcceptedConnection(payload));
+        });
+
+        channel.bind("connection-removed", (payload: ConnectionPayload) => {
+            dispatch(addRemovedConnectionNotification(payload));
+            dispatch(finalizeRemovedConnection(payload));
         });
 
         return () => {

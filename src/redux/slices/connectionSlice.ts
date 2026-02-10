@@ -44,6 +44,15 @@ export interface ConnectionState {
             profile_picture: string;
         };
     }[];
+    removed: {
+        connectionId: string;
+        createdAt: Date;
+        user: {
+            _id: string;
+            full_name: string;
+            profile_picture: string;
+        };
+    }[];
     loading: boolean;
 }
 
@@ -61,6 +70,7 @@ const initialState: ConnectionState = {
     connectionUser: null,
     declined: [],
     accepted: [],
+    removed: [],
     loading: false
 }
 
@@ -259,6 +269,24 @@ const connectionSlice = createSlice({
 
         clearAcceptedNotification: (state) => {
             state.accepted = [];
+        },
+
+        addRemovedConnectionNotification: (state, action) => {
+            const exists = state.removed.some((c) => c.connectionId === action.payload.connectionId);
+            if (!exists) {
+                state.removed.unshift(action.payload);
+            } 
+        },
+
+        finalizeRemovedConnection: (state, action) => {
+            const isConnected = state.connections.some((c) => c.user._id === action.payload.user._id);
+            if (isConnected) {
+                state.connections = state.connections.filter((c) => c.user._id !== action.payload.user._id);
+            }
+        },
+
+        clearRemovedConnectionNotification: (state) => {
+            state.removed = [];
         }
     },
     extraReducers: (builder) => {
@@ -354,7 +382,10 @@ export const {
     clearDeclinedNotification,
     addAcceptedConnectionNotification,
     finalizeAcceptedConnection,
-    clearAcceptedNotification
+    clearAcceptedNotification,
+    addRemovedConnectionNotification,
+    finalizeRemovedConnection,
+    clearRemovedConnectionNotification
 } = connectionSlice.actions;
 
 export default connectionSlice.reducer;
