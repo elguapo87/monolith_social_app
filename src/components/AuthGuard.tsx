@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import Loading from "./Loading";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { fetchUser } from "@/redux/slices/userSlice";
+import { addFollowNotification, fetchUser } from "@/redux/slices/userSlice";
 import { addOrUpdateNotification, markAsSeen } from "@/redux/slices/notificationSlice";
 import {
     addAcceptedConnectionNotification,
@@ -167,6 +167,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         channel.bind("connection-removed", (payload: ConnectionPayload) => {
             dispatch(addRemovedConnectionNotification(payload));
             dispatch(finalizeRemovedConnection(payload));
+        });
+
+        channel.bind("user-followed", (payload: ConnectionPayload) => {
+            dispatch(addFollowNotification(payload));
         });
 
         return () => {

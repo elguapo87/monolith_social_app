@@ -33,8 +33,15 @@ interface UserState {
     loading: boolean;
     profileData: User | null;
     profilePosts: Post[];
+    followed: {
+        user: {
+            _id: string;
+            full_name: string
+            profile_picture: string;
+        },
+        createdAt: Date;
+    }[];
 }
-
 
 interface UpdateUserPayload {
     userData: FormData;
@@ -55,7 +62,8 @@ const initialState: UserState = {
     value: null,
     loading: false,
     profileData: null,
-    profilePosts: []
+    profilePosts: [],
+    followed: []
 }
 
 export const fetchUser = createAsyncThunk("user/getUser", async (token: string, { rejectWithValue }) => {
@@ -170,6 +178,17 @@ const userSlice = createSlice({
             state.profileData = null;
             state.profilePosts = [];
             state.loading = false;
+        },
+
+        addFollowNotification: (state, action) => {
+            const exists = state.followed.some((f) => f.user._id === action.payload.user._id);
+            if (!exists) {
+                state.followed.unshift(action.payload);
+            }
+        },
+
+        clearFollowNotification: (state) => {
+            state.followed = [];
         }
     },
     extraReducers: (builder) => {
@@ -192,8 +211,8 @@ const userSlice = createSlice({
                 state.loading = false;
                 if (state.value) {
                     state.value = {
-                        ...state.value,        
-                        ...action.payload      
+                        ...state.value,
+                        ...action.payload
                     };
                 }
             })
@@ -299,6 +318,6 @@ const userSlice = createSlice({
     }
 })
 
-export const { clearUser } = userSlice.actions;
+export const { clearUser, addFollowNotification, clearFollowNotification } = userSlice.actions;
 
 export default userSlice.reducer;

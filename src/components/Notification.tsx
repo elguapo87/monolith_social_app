@@ -8,7 +8,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchRecentConversations } from '@/redux/slices/notificationSlice';
 import { AppDispatch, RootState } from '@/redux/store';
 import moment from 'moment';
-import { clearAcceptedNotification, clearDeclinedNotification, clearRemovedConnectionNotification, fetchConnections } from '@/redux/slices/connectionSlice';
+import {
+    clearAcceptedNotification,
+    clearDeclinedNotification,
+    clearRemovedConnectionNotification,
+    fetchConnections
+} from '@/redux/slices/connectionSlice';
+import { clearFollowNotification } from '@/redux/slices/userSlice';
 
 type SidebarProps = {
     sidebarOpen?: boolean;
@@ -20,6 +26,7 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     const { getToken } = useAuth();
     const { unread: unreadMessages } = useSelector((state: RootState) => state.notifications);
     const { pendingConnections, declined, accepted, removed } = useSelector((state: RootState) => state.connection);
+    const followed = useSelector((state: RootState) => state.user.followed);
 
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -27,8 +34,12 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
     const totalUnread = unreadMessages.reduce((sum, msg) => sum + msg.unread_count, 0);
 
-    const totalNotifications
-        = totalUnread + pendingConnections.length + declined.length + accepted.length + removed.length;
+    const totalNotifications = totalUnread
+        + pendingConnections.length
+        + declined.length
+        + accepted.length
+        + removed.length
+        + followed.length;
 
     const messageNotifications = unreadMessages.map((msg) => ({
         type: "message" as const,
@@ -58,11 +69,18 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         payload: conn
     }));
 
-    const removeNofitication = removed.map((conn) => ({
+    const removeNotification = removed.map((conn) => ({
         type: "remove" as const,
         id: conn.connectionId,
         createdAt: conn.createdAt,
         payload: conn
+    }));
+
+    const followNotification = followed.map((user) => ({
+        type: "follow" as const,
+        id: user.user._id,
+        createdAt: user.createdAt,
+        payload: user
     }));
 
     const notifications = [
@@ -70,7 +88,8 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         ...connectionNotification,
         ...declineNotification,
         ...acceptNotification,
-        ...removeNofitication
+        ...removeNotification,
+        ...followNotification
     ].sort((a, b) =>
         new Date(a.createdAt).getTime() -
         new Date(b.createdAt).getTime()
@@ -120,6 +139,10 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
     const handleClearRemoveNotification = () => {
         dispatch(clearRemovedConnectionNotification());
+    };
+
+    const handleClearFollowNotification = () => {
+        dispatch(clearFollowNotification());
     };
 
     return (
@@ -324,6 +347,43 @@ const Notification = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                         <CircleCheckBig
                                             className='text-red-400 size-6 self-center'
                                             onClick={handleClearRemoveNotification}
+                                        />
+                                    </div>
+                                )
+                            }
+
+                            if (notification.type === "follow") {
+                                const user = notification.payload;
+
+                                return (
+                                    <div
+                                        key={`conn-${user.user._id}`}
+                                        className="flex items-start gap-3 p-2 rounded-lg
+                                            hover:bg-gray-100 transition cursor-pointer"
+                                    >
+                                        <Image
+                                            src={user.user.profile_picture || assets.avatar_icon}
+                                            alt={user.user.full_name}
+                                            width={40}
+                                            height={40}
+                                            className="rounded-full object-cover size-10"
+                                        />
+                                        <div className='flex-1 flex flex-col'>
+                                            <p className="font-medium text-sm text-gray-800">
+                                                {user.user.full_name}
+                                            </p>
+                                            <p className='text-xs text-gray-500'>
+                                                started following you
+                                            </p>
+
+                                            <span className='text-xs text-gray-400'>
+                                                {moment(user.createdAt).fromNow()}
+                                            </span>
+                                        </div>
+
+                                        <CircleCheckBig
+                                            className='text-red-400 size-6 self-center'
+                                            onClick={handleClearFollowNotification}
                                         />
                                     </div>
                                 )

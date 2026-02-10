@@ -1,3 +1,4 @@
+import { pusherServer } from "@/lib/pusher/server";
 import { protectUser } from "@/middleware/userAuth";
 import userModel from "@/models/userModel";
 import { NextResponse } from "next/server";
@@ -22,8 +23,8 @@ export async function POST(req: Request) {
         }
 
         if (authUser.following.includes(targetUserId)) {
-            return NextResponse.json({ 
-                success: false, message: "You are already following this user" 
+            return NextResponse.json({
+                success: false, message: "You are already following this user"
             }, { status: 400 });
         }
 
@@ -31,6 +32,19 @@ export async function POST(req: Request) {
         targetUser.followers.push(authUser._id);
 
         await Promise.all([authUser.save(), targetUser.save()]);
+
+        await pusherServer.trigger(
+            `user-${targetUser._id}`,
+            "user-followed",
+            {
+                user: {
+                    _id: authUser._id,
+                    full_name: authUser.full_name,
+                    profile_picture: authUser.profile_picture
+                },
+                createdAt: new Date().toISOString()
+            }
+        )
 
         return NextResponse.json({ success: true, message: "You are now following this user" });
 
