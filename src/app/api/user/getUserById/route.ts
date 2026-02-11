@@ -13,7 +13,7 @@ export async function GET(req: Request) {
         const profileId = searchParams.get("profileId");
 
         const user = await userModel.findById(profileId)
-            .select("_id full_name user_name bio profile_picture cover_photo location followers following")
+            .select("_id full_name user_name bio profile_picture cover_photo location followers following createdAt");
 
         if (!user) {
             return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });

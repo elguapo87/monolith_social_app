@@ -15,7 +15,7 @@ export async function GET(req: Request) {
         const posts = await postModel.find({
             user: profileId
         })
-            .populate("user", "_id full_name user_name bio profile_picture cover_photo location followers following")
+            .populate("user", "_id full_name user_name bio profile_picture cover_photo location followers following createdAt")
             .sort({ createdAt: -1 });
 
         return NextResponse.json({ success: true, posts });
