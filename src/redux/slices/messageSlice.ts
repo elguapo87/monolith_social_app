@@ -14,6 +14,20 @@ interface MessageData {
     updatedAt: Date | string,
 }
 
+interface RecentMessage {
+    user: {
+        _id: string;
+        full_name: string;
+        profile_picture: string;
+    };
+    message_type: string;
+    latest_message: string;
+    media_url: string;
+    latest_created_at: Date;
+    unread_count: number;
+    is_unread: boolean;
+}
+
 interface MessagesPayload {
     to_user_id: string;
     token: string | null;
@@ -21,6 +35,7 @@ interface MessagesPayload {
 
 interface MessageState {
     messages: MessageData[];
+    recentConversations: RecentMessage[];
     loading: boolean;
 }
 
@@ -31,6 +46,7 @@ interface AddMessagePayload {
 
 const initialState: MessageState = {
     messages: [],
+    recentConversations: [],
     loading: false,
 }
 
@@ -73,6 +89,26 @@ export const addMessage = createAsyncThunk("message/addMessage", async (
     }
 });
 
+export const getUserRecentMessages = createAsyncThunk("message/getUserRecentMessages", async (
+    token: string | null, { rejectWithValue }
+) => {
+    try {
+        const { data } = await api.get("/message/getUserRecentMessages", {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!data.success) {
+            return rejectWithValue(data.message || "Failed to fetch recent messages");
+        }
+
+        return data.recent_messages
+
+    } catch (error) {
+        toast.error("Failed to fetch recent messages");
+        return rejectWithValue("Failed to fetch recent messages");
+    }
+});
+
 const messageSlice = createSlice({
     name: "message",
     initialState,
@@ -112,6 +148,17 @@ const messageSlice = createSlice({
             .addCase(addMessage.rejected, (state, action) => {
                 state.loading = false;
                 toast.error((action.payload as string) || "Failed to add message");
+            })
+            .addCase(getUserRecentMessages.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getUserRecentMessages.fulfilled, (state, action) => {
+                state.loading = false;
+                state.recentConversations = action.payload;
+            })
+            .addCase(getUserRecentMessages.rejected, (state, action) => {
+                state.loading = false;
+                toast.error((action.payload as string) || "Failed to fetch user messages");
             })
     }
 })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { assets } from "../../public/assets";
 import Link from "next/link";
 import Image from "next/image";
@@ -6,49 +6,21 @@ import moment from "moment";
 import api from "@/lib/axios";
 import { useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
-
-type RecentMessagesType = {
-  latest_created_at: string | Date;
-  latest_message: string;
-  media_url: string | ""; 
-  unread_count: number;
-  user: {
-    full_name: string
-    profile_picture: string;
-    user_name: string;
-    _id: string;
-  };
-}
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { getUserRecentMessages } from "@/redux/slices/messageSlice";
 
 const RecentMessages = () => {
 
   const { getToken } = useAuth();
-
-  const [messages, setMessages] = useState<RecentMessagesType[]>([]);
-
-  const fetchRecentMessages = async () => {
-    try {
-      const token = await getToken();
-
-      const { data } = await api.get("/message/getUserRecentMessages", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (data.success) {
-        setMessages(data.recent_messages.slice(0, 5));
-
-      } else {
-        toast.error(data.message);
-      }
-
-    } catch (error) {
-      toast.error("Failed to fetch messages");
-    }
-  };
+  const { recentConversations: messages } = useSelector((state: RootState) => state.message);
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    fetchRecentMessages();
-  }, [getToken]);
+    getToken().then((token) => {
+      dispatch(getUserRecentMessages(token));
+    });
+  }, [messages, getToken, dispatch]);
 
   return messages.length > 0 && (
     <div className="bg-white max-w-xs mt-4 p-4 min-h-20 rounded-md shadow text-xs text-slate-800">
