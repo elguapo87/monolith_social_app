@@ -20,7 +20,7 @@ const RecentMessages = () => {
     getToken().then((token) => {
       dispatch(getUserRecentMessages(token));
     });
-  }, [messages, getToken, dispatch]);
+  }, [getToken, dispatch]);
 
   return messages.length > 0 && (
     <div className="bg-white max-w-xs mt-4 p-4 min-h-20 rounded-md shadow text-xs text-slate-800">
